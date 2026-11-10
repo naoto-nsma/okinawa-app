@@ -16,13 +16,13 @@
 /* Layout: 見出し → タブ（日ごと／名前で見る）→ 日付・名前の切り替え → カード */
 :root{
   --bg:#eff7f1; --surface:#ffffff; --line:#cfe5d5; --fg:#1f2a24; --muted:#5f6f66;
-  --accent:#2f7d4f; --accent-fg:#ffffff; --accent-soft:#dcefe2; --tel:#c2456a; --tel-soft:#fbe2ea; --off:#8a8f8c; --we:#f6faf7; --memo:#a35a00; --memo-soft:#fdeccf; --tw:#b0279b; --tw-soft:#fbd9f4;
+  --accent:#2f7d4f; --accent-fg:#ffffff; --accent-soft:#dcefe2; --tel:#c2456a; --tel-soft:#fbe2ea; --off:#8a8f8c; --we:#f6faf7; --memo:#a35a00; --memo-soft:#fdeccf; --tw:#b0279b; --tw-soft:#fbd9f4; --tw-cell:#fbd9f4;
   --font:"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
   --num:"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#121a15; --surface:#1b241e; --line:#2e3d33; --fg:#e6efe9; --muted:#9aaba0;
-  --accent:#7cc79a; --accent-fg:#0f1a13; --accent-soft:#1f3527; --tel:#f08aa8; --tel-soft:#3c2430; --off:#7d857f; --we:#161f19; --memo:#f0b45a; --memo-soft:#3a2a12; --tw:#f39be3; --tw-soft:#4a2343; color-scheme:dark}}
+  --accent:#7cc79a; --accent-fg:#0f1a13; --accent-soft:#1f3527; --tel:#f08aa8; --tel-soft:#3c2430; --off:#7d857f; --we:#161f19; --memo:#f0b45a; --memo-soft:#3a2a12; --tw:#f39be3; --tw-soft:#4a2343; --tw-cell:#f8cdef; color-scheme:dark}}
 *{box-sizing:border-box}
 html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:16px;line-height:1.6;margin:0;
@@ -236,13 +236,13 @@ function monthView(data,y,m){
     for(let d=1;d<=days;d++){
       const w=new Date(y,m-1,d).getDay(),e=map[n+"|"+d];
       if(e&&e.duty)used.add(e.duty);
-      r+=`<td class="c ${kind(d)}${d===todayD?" now":""}${e&&e.memo?" hm":""}"${e&&e.memo?` title="${esc(e.memo)}"`:""}>${e&&e.duty?`<span class="du${e.tw?" twc":""}" style="background:${e.tw?"var(--tw-soft)":dutyBg(e.duty)}">${short(e.duty)}</span>`:""}${e&&e.tel?`<span class="t">TEL</span>`:""}</td>`;
+      r+=`<td class="c ${kind(d)}${d===todayD?" now":""}${e&&e.memo?" hm":""}"${e&&e.memo?` title="${esc(e.memo)}"`:""}>${e&&e.duty?`<span class="du${e.tw?" twc":""}" style="background:${e.tw?"var(--tw-cell)":dutyBg(e.duty)}">${short(e.duty)}</span>`:""}${e&&e.tel?`<span class="t">TEL</span>`:""}</td>`;
     }
     return `<tr>${r}</tr>`;
   }).join("");
   const legend=[...used].map(d=>`<span style="background:${dutyBg(d)}">${esc(d)}</span>`).join("");
   return `<div class="mbox" id="mbox"><table class="mt"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>
-    <div class="legend">${legend}<span class="twc" style="background:var(--tw-soft)">在宅</span><span style="color:var(--tel);font-weight:700;background:none;padding-left:2px">TEL＝TEL当番</span></div>
+    <div class="legend">${legend}<span class="twc" style="background:var(--tw-cell)">在宅</span><span style="color:var(--tel);font-weight:700;background:none;padding-left:2px">TEL＝TEL当番</span></div>
     <p class="help">表は左右・上下に動かせます。今日の列は緑、日曜・祝日は赤、土曜は青の列です。ピンクの枠は在宅です。</p>`;
 }
 function scrollToToday(){const c=$("todayCol"),b=$("mbox");if(c&&b)b.scrollLeft=Math.max(0,c.offsetLeft-100-44)}
