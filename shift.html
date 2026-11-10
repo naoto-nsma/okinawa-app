@@ -31,7 +31,7 @@ body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:16px
 header,nav,.toolbar,.dayhead,table.dt{max-width:880px;width:100%}
 header{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
 h1{font-size:1.35rem;line-height:1.35;margin:0;font-weight:700}
-.back{display:block;font-size:.85rem;font-weight:700;color:var(--accent);text-decoration:none;margin-bottom:2px}
+.back{display:flex;align-items:center;width:fit-content;min-height:40px;padding:6px 16px 6px 12px;margin-bottom:10px;border-radius:999px;font-size:1rem;font-weight:700;line-height:1.2;color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent);text-decoration:none}
 .today{font-family:var(--num);color:var(--muted);font-size:.95rem}
 nav{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:4px}
 nav button{flex:1;border:0;background:none;font:inherit;font-weight:700;color:var(--muted);padding:10px 6px;border-radius:7px;cursor:pointer}
@@ -89,7 +89,7 @@ table.mt td.now{box-shadow:inset 2px 0 0 var(--accent),inset -2px 0 0 var(--acce
 .legend{display:flex;flex-wrap:wrap;gap:6px;font-size:.8rem}
 .legend span{padding:2px 8px;border-radius:6px;color:#24302a}
 /* 日ごと（コンパクト） */
-table.dt td{vertical-align:top} table.dt td.k{width:5.5em;font-weight:700;white-space:nowrap}
+table.dt td{vertical-align:top;line-height:1.75} table.dt td.k{width:5.5em;font-weight:700;white-space:nowrap}
 table.dt td.k .n{display:block;font-weight:400;font-size:.8rem;color:var(--muted);font-family:var(--num)}
 table.dt tr.tel td{background:var(--tel-soft)} table.dt tr.tel td.k{color:var(--tel)}
 table.dt tr.off td{color:var(--off)}
@@ -247,9 +247,9 @@ function dayView(data,y,m){
   const order=Object.keys(groups).sort((a,b)=>groups[b].length-groups[a].length);
   let h=nav()+`<div class="dayhead">${m}月${d}日（${data.hol[d]?"祝":WD[cur.getDay()]}）${data.hol[d]?`<span class="pill cnt">${esc(data.hol[d])}</span>`:""}${isToday(cur)?`<span class="pill now">今日</span>`:""}<span class="pill cnt">出勤 ${work.length}人</span></div>`;
   if(!work.length&&!off.length)return h+`<p class="empty">この日のシフトはありません</p>`;
-  let rows=`<tr class="tel"><td class="k">TEL当番</td><td>${tel.length?tel.map(x=>esc(x.name)).join("、"):"なし"}</td></tr>`;
-  rows+=order.map(k=>`<tr><td class="k"><span class="du" style="background:${dutyBg(k)};display:inline-block;padding:1px 8px">${esc(k)}</span><span class="n">${groups[k].length}人</span></td><td>${groups[k].map(esc).join("、")}</td></tr>`).join("");
-  if(off.length)rows+=`<tr class="off"><td class="k">お休み</td><td>${off.map(x=>esc(x.name)+"（"+esc(x.duty)+"）").join("、")}</td></tr>`;
+  let rows=`<tr class="tel"><td class="k">TEL当番</td><td>${tel.length?tel.map(x=>esc(x.name)).join("<br>"):"なし"}</td></tr>`;
+  rows+=order.map(k=>`<tr><td class="k"><span class="du" style="background:${dutyBg(k)};display:inline-block;padding:1px 8px">${esc(k)}</span><span class="n">${groups[k].length}人</span></td><td>${groups[k].map(esc).join("<br>")}</td></tr>`).join("");
+  if(off.length)rows+=`<tr class="off"><td class="k">お休み</td><td>${off.map(x=>esc(x.name)+"（"+esc(x.duty)+"）").join("<br>")}</td></tr>`;
   return h+`<table class="dt"><tbody>${rows}</tbody></table>`;
 }
 document.addEventListener("click",e=>{
