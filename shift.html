@@ -89,13 +89,17 @@ table.mt td.now{box-shadow:inset 2px 0 0 var(--accent),inset -2px 0 0 var(--acce
 .legend{display:flex;flex-wrap:wrap;gap:6px;font-size:.8rem}
 .legend span{padding:2px 8px;border-radius:6px;color:#24302a}
 /* 日ごと（コンパクト） */
-table.dt td{vertical-align:top;line-height:1.75} table.dt td.k{width:5.5em;font-weight:700;white-space:nowrap}
+table.dt td{vertical-align:top;line-height:1.75} table.dt{table-layout:fixed} table.dt td{padding-right:8px} table.dt td.k{width:6.3em;font-weight:700;white-space:nowrap}
 table.dt td.k .n{display:block;font-weight:400;font-size:.8rem;color:var(--muted);font-family:var(--num)}
 table.dt tr.tel td{background:var(--tel-soft)} table.dt tr.tel td.k{color:var(--tel)}
 table.dt tr.off td{color:var(--off)}
-table.dt .tw{display:inline-block;margin-left:8px;padding:0 7px;border-radius:6px;font-size:.82rem;line-height:1.6;font-weight:700;color:var(--tw);background:var(--tw-soft);vertical-align:1px}
+table.dt .dk{display:inline-block;margin:0;padding:4px 10px;border-radius:8px;font-size:1.08rem;line-height:1.3;letter-spacing:.02em}
+table.dt td.k .n{margin-top:4px}
+table.dt .nl{display:flex;align-items:baseline}table.dt .slot{flex:none;width:2.6em}table.dt .nm2{flex:1;min-width:0}
+table.dt .telb{display:inline-block;margin:0;padding:0 5px;border-radius:6px;font-size:.72rem;line-height:1.6;font-weight:700;color:var(--surface);background:var(--tel);vertical-align:1px}
+table.dt .tw{display:inline-block;margin-left:5px;padding:0 5px;border-radius:6px;font-size:.78rem;line-height:1.6;font-weight:700;color:var(--tw);background:var(--tw-soft);vertical-align:1px}
 .twc{box-shadow:inset 0 0 0 1.5px var(--tw)}
-table.dt .memo{display:inline-block;margin-left:8px;padding:0 7px;border-radius:6px;font-size:.82rem;line-height:1.6;font-weight:700;color:var(--memo);background:var(--memo-soft);vertical-align:1px}
+table.dt .memo{display:inline-block;margin-left:5px;padding:0 5px;border-radius:6px;font-size:.78rem;line-height:1.6;font-weight:700;color:var(--memo);background:var(--memo-soft);vertical-align:1px}
 table.mt td.hm{position:relative} table.mt td.hm::after{content:"";position:absolute;top:0;right:0;border-style:solid;border-width:0 7px 7px 0;border-color:transparent var(--memo) transparent transparent}
 
 #status:empty{display:none}
@@ -251,12 +255,12 @@ function dayView(data,y,m){
   const work=list.filter(x=>x.duty&&!OFF.includes(x.duty)),off=list.filter(x=>OFF.includes(x.duty));
   const tel=list.filter(x=>x.tel);
   const groups={};work.forEach(x=>(groups[x.duty]=groups[x.duty]||[]).push(x));
-  const who=x=>esc(x.name)+(x.tw?`<span class="tw">在宅</span>`:"")+(x.memo?`<span class="memo">${esc(x.memo)}</span>`:"");
+  const who=x=>`<div class="nl"><span class="slot">${x.tel?`<span class="telb">TEL</span>`:""}</span><span class="nm2">${esc(x.name)}${x.tw?`<span class="tw">在宅</span>`:""}${x.memo?`<span class="memo">${esc(x.memo)}</span>`:""}</span></div>`;
   const order=Object.keys(groups).sort((a,b)=>groups[b].length-groups[a].length);
   let h=nav()+`<div class="dayhead">${m}月${d}日（${data.hol[d]?"祝":WD[cur.getDay()]}）${data.hol[d]?`<span class="pill cnt">${esc(data.hol[d])}</span>`:""}${isToday(cur)?`<span class="pill now">今日</span>`:""}<span class="pill cnt">出勤 ${work.length}人${work.some(x=>x.tw)?`（在宅 ${work.filter(x=>x.tw).length}人）`:""}</span></div>`;
   if(!work.length&&!off.length)return h+`<p class="empty">この日のシフトはありません</p>`;
-  let rows=`<tr class="tel"><td class="k">TEL当番</td><td>${tel.length?tel.map(who).join("<br>"):"なし"}</td></tr>`;
-  rows+=order.map(k=>`<tr><td class="k"><span class="du" style="background:${dutyBg(k)};display:inline-block;padding:1px 8px">${esc(k)}</span><span class="n">${groups[k].length}人</span></td><td>${groups[k].map(who).join("<br>")}</td></tr>`).join("");
+  let rows="";
+  rows+=order.map(k=>`<tr><td class="k"><span class="du dk" style="background:${dutyBg(k)}">${esc(k)}</span><span class="n">${groups[k].length}人</span></td><td>${groups[k].map(who).join("")}</td></tr>`).join("");
   if(off.length)rows+=`<tr class="off"><td class="k">お休み</td><td>${off.map(x=>esc(x.name)+"（"+esc(x.duty)+"）").join("<br>")}</td></tr>`;
   return h+`<table class="dt"><tbody>${rows}</tbody></table>`;
 }
