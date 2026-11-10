@@ -89,13 +89,14 @@ table.mt td.now{box-shadow:inset 2px 0 0 var(--accent),inset -2px 0 0 var(--acce
 .legend{display:flex;flex-wrap:wrap;gap:6px;font-size:.8rem}
 .legend span{padding:2px 8px;border-radius:6px;color:#24302a}
 /* 日ごと（コンパクト） */
-table.dt td{vertical-align:top;line-height:1.75} table.dt{table-layout:fixed} table.dt td{padding-right:8px} table.dt td.k{width:6.3em;font-weight:700;white-space:nowrap}
+table.dt td{vertical-align:top;line-height:1.75} table.dt{table-layout:fixed} table.dt td{padding-right:8px} table.dt td.k{width:5.6em;font-weight:700;white-space:nowrap}
 table.dt td.k .n{display:block;font-weight:400;font-size:.8rem;color:var(--muted);font-family:var(--num)}
 table.dt tr.tel td{background:var(--tel-soft)} table.dt tr.tel td.k{color:var(--tel)}
 table.dt tr.off td{color:var(--off)}
-table.dt .dk{display:inline-block;margin:0;padding:4px 10px;border-radius:8px;font-size:1.08rem;line-height:1.3;letter-spacing:.02em}
-table.dt td.k .n{margin-top:4px}
-table.dt .nl{display:flex;align-items:baseline}table.dt .slot{flex:none;width:2.6em}table.dt .nm2{flex:1;min-width:0}
+table.mt td.nm.hc{background:var(--nc);color:#1f2a24;font-weight:700}
+@media (prefers-color-scheme: dark){table.mt td.nm.hc{background:var(--surface);color:var(--fg);box-shadow:inset 7px 0 0 var(--nc);padding-left:14px}}
+table.dt .dk{display:inline-block;margin:0;padding:1px 8px}
+table.dt .nl{display:flex;align-items:baseline}table.dt .slot{flex:none;width:2.8em}table.dt .nm2{flex:1;min-width:0}
 table.dt .telb{display:inline-block;margin:0;padding:0 5px;border-radius:6px;font-size:.72rem;line-height:1.6;font-weight:700;color:var(--surface);background:var(--tel);vertical-align:1px}
 table.dt .tw{display:inline-block;margin-left:5px;padding:0 5px;border-radius:6px;font-size:.78rem;line-height:1.6;font-weight:700;color:var(--tw);background:var(--tw-soft);vertical-align:1px}
 .twc{box-shadow:inset 0 0 0 1.5px var(--tw)}
@@ -186,8 +187,8 @@ let tab="day", cur=new Date(now.getFullYear(),now.getMonth(),now.getDate()), mon
 try{me=localStorage.getItem("shiftMe")||localStorage.getItem("lastName")||""}catch(e){}
 
 /* シートの表（1行目タイトル、3行目日付、4行目曜日、5行目から1人1行・1日2列：業務／TEL）を読み取る */
-function parse(grid,notes,tele){
-  notes=notes||{};const TW=new Set(tele||[]);
+function parse(grid,notes,tele,nameBg){
+  notes=notes||{};nameBg=nameBg||[];const colors={};const TW=new Set(tele||[]);
   const days={},people=[];
   const r3=grid[2]||[];
   const cols=[];
@@ -196,6 +197,7 @@ function parse(grid,notes,tele){
     const row=grid[r]||[],name=String(row[0]||"").trim();
     if(!name)continue;
     people.push(name);
+    const bg=String(nameBg[r]||"").toLowerCase();if(bg&&bg!=="#ffffff")colors[name]=bg;
     cols.forEach(([d,c])=>{
       const duty=String(row[c]||"").trim(),extra=String(row[c+1]||"").trim();
       if(!duty&&!extra)return;
@@ -203,13 +205,16 @@ function parse(grid,notes,tele){
       (days[d]=days[d]||[]).push({name,duty,memo,tw:TW.has(r+","+c),tel:/TEL/i.test(extra)||/TEL/i.test(duty)});
     });
   }
-  return {days,people};
+  // リーダー・サブリーダーだけ色を付ける：同じ色が3人以上いる色（メンバーの色）は付けない
+  const cnt={};Object.values(colors).forEach(c=>cnt[c]=(cnt[c]||0)+1);
+  Object.keys(colors).forEach(n=>{if(cnt[colors[n]]>=3)delete colors[n]});
+  return {days,people,colors};
 }
 async function month(y,m){
   const k=`${y}-${pad(m)}`;
   if(months[k])return months[k];
   const res=await rpc("shiftGetMonth",[k]);
-  months[k]=res&&res.grid?{...parse(res.grid,res.notes,res.tele),found:true,hol:res.holidays||{}}:{days:{},people:[],found:false,hol:{}};
+  months[k]=res&&res.grid?{...parse(res.grid,res.notes,res.tele,res.nameBg),found:true,hol:res.holidays||{}}:{days:{},people:[],found:false,hol:{}};
   return months[k];
 }
 function setStatus(m){$("status").innerHTML=m?`<div class="notice">${esc(m)}</div>`:""}
@@ -236,7 +241,8 @@ function monthView(data,y,m){
   const map={};Object.entries(data.days).forEach(([d,l])=>l.forEach(x=>{map[x.name+"|"+d]=x}));
   const used=new Set();
   const rows=data.people.map(n=>{
-    let r=`<td class="nm" title="${esc(n)}">${esc(n)}</td>`;
+    const nc=data.colors&&data.colors[n];
+    let r=`<td class="nm${nc?" hc":""}" title="${esc(n)}"${nc?` style="--nc:${nc}"`:""}>${esc(n)}</td>`;
     for(let d=1;d<=days;d++){
       const w=new Date(y,m-1,d).getDay(),e=map[n+"|"+d];
       if(e&&e.duty)used.add(e.duty);
