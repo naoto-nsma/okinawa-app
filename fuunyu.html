@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>封入・封緘チェック｜N-SMART 沖縄事務所</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="N-SMART沖縄">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f5f2fb">
+<script src="config.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=BIZ+UDGothic:wght@700&display=swap">
+<style>
+:root{
+  --bg:#fdf8e7; --card:#fff; --ink:#1f2933; --sub:#6b7785; --line:#eee2b6;
+  --accent:#a8661a; --accent-soft:#f8ecc6; --done:#e3f3e8; --done-ink:#1e7a43;
+  --key:#fff6d6; --key-line:#e9cf74; --warn:#c0392b;
+  --g1:#f6e9c8; --g2:#e6e4f4; --g3:#ead9ef;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Noto Sans JP","Yu Gothic UI",Meiryo,sans-serif;font-size:15px;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.wrap{max-width:980px;margin:0 auto;padding:0 16px 80px}
+header.top{padding-top:env(safe-area-inset-top,0px)}
+header.top .in{max-width:980px;margin:0 auto;padding:14px 16px 0}
+/* 見出し（3機能共通の形） */
+.hd{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.hd h1{font-size:1.35rem;line-height:1.35;margin:0;font-weight:700;text-wrap:balance;font-family:"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif}
+.hd .back{display:block;font-size:.85rem;font-weight:700;color:var(--accent);text-decoration:none;margin-bottom:2px}
+.hd .today{font-family:"BIZ UDGothic","Hiragino Sans",Meiryo,monospace;color:var(--sub);font-size:.95rem}
+.me{display:flex;align-items:center;gap:6px;font-size:13px}
+.me{margin-top:10px;color:var(--sub);font-weight:700}
+.me select{background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-weight:400}
+.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 14px;font-weight:600}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--accent)}
+.btn.danger{color:var(--warn);border-color:#f0c9c4}
+.btn.sm{padding:6px 10px;font-size:13px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:14px}
+.card h2{font-size:15px;margin:0 0 10px;display:flex;align-items:baseline;gap:4px 8px;flex-wrap:wrap}
+.card h2 .muted{font-weight:400}
+.muted{color:var(--sub);font-size:13px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+
+/* list */
+.toolbar{display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap}
+.toolbar select{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff}
+.rec{display:flex;align-items:center;gap:12px;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer}
+.rec:hover{border-color:var(--accent)}
+.rec .d{font-weight:700;font-size:17px;min-width:64px}
+.rec .c{flex:1}
+.rec .c b{display:block}
+.bar{height:8px;background:#e9edf2;border-radius:6px;overflow:hidden;width:110px}
+.bar i{display:block;height:100%;background:var(--done-ink)}
+.pct{font-size:12px;color:var(--sub);text-align:right;margin-top:3px}
+.empty{text-align:center;color:var(--sub);padding:40px 0}
+
+/* form */
+label.f{display:block;margin:12px 0 4px;font-weight:600;font-size:13px;color:var(--sub)}
+.inp{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff}
+.counts{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+
+/* detail */
+.dhead{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-top:16px}
+.dhead .t{font-size:19px;font-weight:800}
+.dhead .t small{font-weight:600;color:var(--sub);font-size:14px;margin-left:6px}
+.dhead .s{font-size:15px;font-weight:700;border-bottom:2px solid var(--ink);padding-bottom:2px}
+.sum{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.chip{background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:13px}
+.chip b{font-size:14px}
+.kb{margin-top:14px}
+.kb .kh{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.kb .kh b{font-size:16px}
+.groups{display:grid;grid-template-columns:4fr 5fr 2fr;gap:10px}
+.grp{border-radius:12px;padding:8px}
+.grp.g1{background:var(--g1)} .grp.g2{background:var(--g2)} .grp.g3{background:var(--g3)}
+.grp .gt{font-size:12px;font-weight:700;color:#4b5563;margin:0 0 6px 2px}
+.steps{display:grid;gap:6px;grid-template-columns:repeat(var(--n,4),1fr)}
+.step{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 6px;min-height:58px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:3px}
+.step .l{font-size:12px;color:var(--sub);font-weight:600}
+.step .n{font-size:14px;font-weight:700;line-height:1.25;word-break:keep-all}
+.step .n.none{color:#b5bec9;font-weight:400}
+.step.key{border-color:var(--key-line);background:var(--key)}
+.step.done{background:var(--done);border-color:#9fd3b1}
+.step.done .n{color:var(--done-ink)}
+.step.key.done{box-shadow:inset 0 0 0 2px var(--key-line)}
+
+table.docs{width:100%;border-collapse:collapse;font-size:14px}
+table.docs th,table.docs td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:middle}
+table.docs th{font-size:12px;color:var(--sub);font-weight:600}
+table.docs td.num{text-align:right;font-variant-numeric:tabular-nums}
+.ck{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:9px;padding:6px 9px;min-width:86px}
+.ck .box{width:18px;height:18px;border:2px solid #9aa5b1;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff}
+.ck.on{background:var(--done);border-color:#9fd3b1}
+.ck.on .box{background:var(--done-ink);border-color:var(--done-ink)}
+.ck .who{font-size:11px;color:var(--sub)}
+.docs-wrap{overflow-x:auto}
+.dcnt{width:72px;border:1px solid var(--line);border-radius:8px;padding:6px;text-align:right;background:#fff}
+.dcnt.ov{border-color:var(--key-line);background:var(--key)}
+table.docs tr.off td{color:#aab3bd}
+
+.work{display:grid;grid-template-columns:170px 1fr;border-top:1px solid var(--line)}
+.work>div{padding:10px 6px;border-bottom:1px solid var(--line)}
+.wbtn{width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 10px}
+.wbtn .wl{font-size:12px;color:var(--sub);font-weight:700;display:block}
+.wbtn .wn{font-weight:700}
+.wbtn .wn.none{color:#b5bec9;font-weight:400}
+.wbtn.done{background:var(--done);border-color:#9fd3b1}
+.wbtn.done .wn{color:var(--done-ink)}
+.notes{margin:0;padding-left:1.1em;font-size:14px;line-height:1.7}
+.notes small{color:var(--sub)}
+.notes .red{color:var(--warn);font-weight:700}
+
+.cnt{display:grid;grid-template-columns:110px 120px 1fr;gap:8px;align-items:center;margin-top:8px}
+.cnt input{width:100%;border:1px solid var(--line);border-radius:9px;padding:8px;text-align:right}
+.formula{font-variant-numeric:tabular-nums;font-size:15px}
+.total{font-size:16px;font-weight:700;margin-top:10px}
+
+/* modal */
+.mask{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}
+.mask.show{display:flex}
+.sheet{background:#fff;width:100%;max-width:520px;border-radius:18px 18px 0 0;padding:18px 16px 22px;max-height:85vh;overflow:auto}
+@media(min-width:700px){.mask{align-items:center}.sheet{border-radius:18px}}
+.sheet h3{margin:0 0 4px;font-size:17px}
+.staff{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.staff button{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:9px 16px;font-weight:600}
+.staff button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.big{width:100%;padding:13px;font-size:16px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1f2933;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:30}
+.toast.show{opacity:1}
+.loading{text-align:center;padding:60px 0;color:var(--sub)}
+
+@media(max-width:720px){
+  .groups{grid-template-columns:1fr}
+  .steps{grid-template-columns:repeat(auto-fill,minmax(74px,1fr))}
+  .work{grid-template-columns:1fr}
+  .work>div:nth-child(odd){border-bottom:0;padding-bottom:0}
+  .cnt{grid-template-columns:90px 100px 1fr}
+}
+
+/* print view */
+#print{display:none;background:#fff;padding:24px}
+.pv h1{font-size:20px;margin:0}
+.pv .ph{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px}
+.pv .ph .s{border-bottom:1.5px solid #000;font-weight:700;padding-bottom:2px}
+.pv table{border-collapse:collapse;width:100%;font-size:12px}
+.pv th,.pv td{border:1px solid #444;padding:5px 4px;text-align:center;height:30px}
+.pv th{font-weight:600}
+.pv .h1{background:var(--g1)} .pv .h2{background:var(--g2)} .pv .h3{background:var(--g3)}
+.pv .y{background:#fff3c4}
+.pv .left{text-align:left}
+.pv .two{display:flex;gap:16px;margin-top:16px;align-items:flex-start}
+.pv .box{border:1px solid #444;margin-top:16px}
+.pv .box .bt{background:#e5e7eb;text-align:center;padding:6px;border-bottom:1px solid #444}
+.pv .wi{display:grid;grid-template-columns:150px 1fr;border-top:1px solid #444}
+.pv .wi:first-of-type{border-top:0}
+.pv .wi>div{padding:6px 8px;font-size:12px}
+.pv .wi>div:first-child{border-right:1px solid #444}
+.pv .wi .wl{background:#eef0f3;margin:-6px -8px 6px;padding:4px;text-align:center;border-bottom:1px solid #444}
+.pv-bar{display:flex;gap:10px;justify-content:flex-end;margin-bottom:14px}
+@media print{
+  body{background:#fff}
+  #app,header.top,.pv-bar,.toast{display:none!important}
+  #print{display:block!important;padding:0}
+  @page{size:A4;margin:12mm}
+}
+</style>
+</head>
+<body>
+<header class="top"><div class="in">
+  <div class="hd"><h1><a id="backMenu" class="back" href="index.html" hidden>‹ メニュー</a>封入・封緘チェック</h1><span class="today" id="todayLabel"></span></div>
+  <div class="me">担当者
+    <select id="meSel" onchange="setMe(this.value)"></select>
+  </div>
+</div></header>
+
+<div id="app" class="wrap"><div class="loading">読み込み中…</div></div>
+<div id="print"></div>
+
+<div class="mask" id="mask" onclick="if(event.target===this)closeModal()">
+  <div class="sheet" id="sheet"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const APP_MOD="fuunyu";
+/* ---- 通信と合言葉（N-SMART 沖縄事務所アプリ共通） ---- */
+const IN_GAS=!!(window.google&&google.script&&google.script.run);
+const API_URL=((window.APP_CONFIG||{}).urls||{})[APP_MOD]||"";
+let KEY="";try{KEY=localStorage.getItem("passKey")||""}catch(e){}
+function errCode(e){const m=String((e&&e.message)||e||"");const k=m.match(/(BADKEY|NOKEY|BUSY):/);return k?k[1]:""}
+function errText(e){return String((e&&e.message)||e||"").replace(/^.*?(BADKEY|NOKEY|BUSY):/,"")}
+function rawRpc(fn,args,key){
+  if(IN_GAS)return new Promise((ok,ng)=>google.script.run.withSuccessHandler(ok).withFailureHandler(ng).rpc(fn,args,key));
+  if(!API_URL){
+    if(typeof MOCK!=="undefined"&&MOCK[fn])return new Promise((ok,ng)=>{try{ok(MOCK[fn](...args))}catch(e){ng(e)}});
+    if(fn==="ping"&&typeof MOCK!=="undefined")return Promise.resolve(true);
+    return Promise.reject(new Error("設定ファイル（config.js）にURLが入っていません"));
+  }
+  return fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({fn,args,key})})
+    .then(r=>r.json()).then(j=>{if(!j.ok)throw new Error(j.error);return j.data});
+}
+function rpc(fn,args){return rawRpc(fn,args||[],KEY).catch(e=>{const c=errCode(e);if(c==="BADKEY"||c==="NOKEY")showGate(c==="NOKEY"?errText(e):"合言葉が変わりました。新しい合言葉を入力してください。");throw e})}
+function gateEsc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function showGate(msg){
+  if(document.getElementById("gate"))return;
+  if(!document.getElementById("gateCss")){const st=document.createElement("style");st.id="gateCss";st.textContent=`
+#gate{position:fixed;inset:0;z-index:100;background:#f5f2fb;color:#221d2e;display:flex;align-items:center;justify-content:center;
+ padding:max(24px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(24px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+ font-family:"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",Meiryo,system-ui,sans-serif}
+#gate form{width:100%;max-width:380px;display:flex;flex-direction:column;gap:14px;text-align:center}
+#gate h2{margin:0;font-size:1.2rem}#gate p{margin:0;color:#5d6a78;font-size:.92rem;line-height:1.6}
+#gate .gi svg{width:88px;height:88px;border-radius:20px;display:block;margin:0 auto}
+#gate input{font:inherit;font-size:1.1rem;padding:14px;border-radius:10px;border:1px solid #ddd5ee;background:#fff;color:#1d2733;text-align:center}
+#gate button{font:inherit;font-weight:700;font-size:1.1rem;padding:14px;border-radius:10px;border:0;background:#6a4fa3;color:#fff;cursor:pointer}
+#gate .ge{color:#a35a00;font-weight:700}
+@media (prefers-color-scheme:dark){#gate{background:#17141f;color:#ece8f4}#gate p{color:#9aa7b4}#gate input{background:#211c2c;border-color:#3a3249;color:#e8edf2}#gate button{background:#b49be6;color:#1a1424}#gate .ge{color:#f0a94a}}`;document.head.appendChild(st)}
+  const d=document.createElement("div");d.id="gate";
+  d.innerHTML=`<form id="gateForm" autocomplete="off">
+    <div class="gi" aria-hidden="true">${ICON_SVG}</div>
+    <h2>N-SMART 沖縄事務所</h2>
+    <p>はじめに、管理者から伝えられた合言葉を入力してください。次からは入力しなくても開けます。</p>
+    <input id="gateKey" type="password" autocapitalize="off" spellcheck="false" placeholder="合言葉" aria-label="合言葉">
+    <p id="gateErr" class="ge"${msg?"":" hidden"}>${gateEsc(msg||"")}</p>
+    <button id="gateBtn">はじめる</button></form>`;
+  document.body.appendChild(d);
+  d.querySelector("form").addEventListener("submit",async e=>{
+    e.preventDefault();
+    const v=d.querySelector("#gateKey").value.trim(),err=d.querySelector("#gateErr"),btn=d.querySelector("#gateBtn");
+    if(!v){err.textContent="合言葉を入力してください。";err.hidden=false;return}
+    btn.disabled=true;btn.textContent="確認しています…";err.hidden=true;
+    try{await rawRpc("ping",[],v);try{localStorage.setItem("passKey",v)}catch(x){}KEY=v;location.reload()}
+    catch(x){btn.disabled=false;btn.textContent="はじめる";const c=errCode(x);
+      err.textContent=c==="BADKEY"?"合言葉が違います。もう一度確かめてください。":c?errText(x):"つながりませんでした。電波のよい所で、もう一度押してください。";err.hidden=false}
+  });
+  setTimeout(()=>{const i=document.getElementById("gateKey");if(i)i.focus()},50);
+}
+const ICON_SVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1fa5c4"/><stop offset="1" stop-color="#0b6f9c"/></linearGradient></defs><rect width="100" height="100" fill="url(#sea)"/><circle cx="36" cy="58" r="14" fill="none" stroke="#fff" stroke-width="7"/><path d="M46 48 L74 20 M64 30 l8 8 M70 24 l7 7" stroke="#fff" stroke-width="7" stroke-linecap="round"/><g transform="translate(70 72)"> <g fill="#e63946">  <ellipse rx="9" ry="13" transform="rotate(0) translate(0 -10)"/><ellipse rx="9" ry="13" transform="rotate(72) translate(0 -10)"/>  <ellipse rx="9" ry="13" transform="rotate(144) translate(0 -10)"/><ellipse rx="9" ry="13" transform="rotate(216) translate(0 -10)"/>  <ellipse rx="9" ry="13" transform="rotate(288) translate(0 -10)"/></g> <circle r="4.5" fill="#9b1d2a"/><path d="M0 0 L-9 -14" stroke="#ffd166" stroke-width="2.4" stroke-linecap="round"/><circle cx="-9" cy="-14" r="2.6" fill="#ffd166"/></g></svg>`;
+/* PWAから開いたときだけ「メニューに戻る」を出す */
+const IN_PWA=!IN_GAS&&!!API_URL;
+
+const STEPS=['印刷','折り','準備','確認','封入','重さ','4点確認','チェック','封緘','件数確認','発送'];
+const GROUPS=[['下準備','g1',['印刷','折り','準備','確認']],['封入・封緘','g2',['封入','重さ','4点確認','チェック','封緘']],['発送','g3',['件数確認','発送']]];
+const KEY_STEPS=['確認','チェック','件数確認'];
+const WORK_ITEMS=['印刷','折り','封筒の準備','材料の準備','撮影・確認','件数確認'];
+
+const S={init:null,rec:null,view:'list',filter:'',modal:null};
+
+/* ---------- サーバー呼び出し ---------- */
+function call(fn,...args){ return rpc(fn,args); }
+function fail(e){ if(errCode(e))return; toast('エラー：'+(e&&e.message||e)); console.error(e); }
+
+/* ---------- 共通 ---------- */
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function md(d){ if(!d)return''; const p=d.split('-'); return (+p[1])+'/'+(+p[2]); }
+function ymd(d){ if(!d)return''; const p=d.split('-'); return p[0]+'年'+(+p[1])+'月'+(+p[2])+'日'; }
+function atMd(at){ return at? md(at.slice(0,10)) : ''; }
+function toast(t){ const el=document.getElementById('toast'); el.textContent=t; el.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'),2200); }
+function me(){ try{return localStorage.getItem('fuunyu_me')||''}catch(e){return S._me||''} }
+function setMe(v){ try{localStorage.setItem('fuunyu_me',v)}catch(e){} S._me=v; }
+function stepKubun(d){ return d.kubun.filter(k=>k.steps); }
+function total(d){ return stepKubun(d).reduce((s,k)=>s+(+k.count||0),0); }
+function docCount(d,doc){ const o=(d.docCounts||{})[doc.name]; if(o!=null&&o!=='') return +o; if(doc.src==='合計') return total(d); const k=d.kubun.find(x=>x.name===doc.src); return k? +k.count||0 : 0; }
+function sentOf(d,k){ return d.sent[k.name]!=null? d.sent[k.name] : (+k.count||0); }
+function formula(n,b){ const q=Math.floor(n/b), r=n%b; return b+' × '+q+(r?' + '+r:''); }
+function progress(d){
+  let all=0,done=0;
+  stepKubun(d).forEach(k=>STEPS.forEach(s=>{all++; const c=d.cells[k.name+'|'+s]; if(c&&c.names&&c.names.length)done++;}));
+  d.docs.forEach(doc=>{ if(!docCount(d,doc)) return; ['印刷','折り'].forEach(t=>{all++; if(d.docChecks[doc.name+'|'+t])done++;}); });
+  WORK_ITEMS.forEach(w=>{all++; const c=d.work[w]; if(c&&c.names&&c.names.length)done++;});
+  return all?Math.round(done*100/all):0;
+}
+function needMe(){ if(me()) return true; toast('上の「担当者」で自分の名前を選んでください'); document.getElementById('meSel').focus(); return false; }
+
+/* ---------- 起動 ---------- */
+async function boot(){
+  try{
+    S.init=await call('getInit');
+    const sel=document.getElementById('meSel');
+    sel.innerHTML='<option value="">選択</option>'+S.init.staff.map(n=>`<option ${n===me()?'selected':''}>${esc(n)}</option>`).join('');
+    const h=location.hash.slice(1);
+    if(h&&h.startsWith('r=')) openRecord(h.slice(2)); else renderList();
+  }catch(e){ if(errCode(e))return; document.getElementById('app').innerHTML='<div class="loading">読み込めませんでした：'+esc(e.message||e)+'</div>'; }
+}
+async function reloadList(){ try{ S.init=await call('getInit'); }catch(e){fail(e)} renderList(); }
+
+/* ---------- 一覧 ---------- */
+function renderList(){
+  S.view='list'; S.rec=null; try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+  const cs=S.init.customers;
+  const recs=S.init.records.filter(r=>!S.filter||r.customer===S.filter);
+  document.getElementById('app').innerHTML=`
+    <div class="toolbar">
+      <select onchange="S.filter=this.value;renderList()">
+        <option value="">すべての顧客</option>
+        ${cs.map(c=>`<option ${c.name===S.filter?'selected':''}>${esc(c.name)}</option>`).join('')}
+      </select>
+      <span class="spacer"></span>
+      <button class="btn ghost sm" onclick="reloadList()">更新</button>
+      <button class="btn primary" onclick="renderNew()">＋ 新しい発送分</button>
+    </div>
+    ${recs.length? recs.map(r=>`
+      <div class="rec" onclick="openRecord('${r.id}')">
+        <div class="d">${md(r.date)}</div>
+        <div class="c"><b>${esc(r.customer)}</b><span class="muted">${r.date.slice(0,4)}年 発送分 ・ ${r.total}枚</span></div>
+        <div><div class="bar"><i style="width:${r.progress}%"></i></div><div class="pct">${r.progress===100?'完了':r.progress+'%'}</div></div>
+      </div>`).join('') : '<div class="empty">まだ記録がありません。「＋ 新しい発送分」から作成してください。</div>'}
+  `;
+}
+
+/* ---------- 新規作成 ---------- */
+function renderNew(){
+  S.view='new';
+  const cs=S.init.customers;
+  if(!cs.length){ toast('スプレッドシートの「顧客」シートに顧客を登録してください'); return; }
+  const c0=S.filter? cs.find(c=>c.name===S.filter)||cs[0] : cs[0];
+  document.getElementById('app').innerHTML=`
+    <div class="card">
+      <h2>新しい発送分</h2>
+      <label class="f">顧客</label>
+      <select class="inp" id="nCust" onchange="renderCounts()">${cs.map(c=>`<option ${c===c0?'selected':''}>${esc(c.name)}</option>`).join('')}</select>
+      <label class="f">発送日</label>
+      <input class="inp" type="date" id="nDate" value="${new Date(Date.now()+9*3600e3).toISOString().slice(0,10)}">
+      <label class="f">枚数</label>
+      <div class="counts" id="nCounts"></div>
+      <label class="f">文書の枚数 <span style="font-weight:400">（空欄＝自動計算、送らない文書は 0）</span></label>
+      <div class="counts" id="nDocs"></div>
+      <div class="row" style="margin-top:18px">
+        <button class="btn" onclick="renderList()">戻る</button><span class="spacer"></span>
+        <button class="btn primary" onclick="doCreate(this)">作成する</button>
+      </div>
+    </div>`;
+  renderCounts();
+}
+function renderCounts(){
+  const c=S.init.customers.find(x=>x.name===document.getElementById('nCust').value);
+  document.getElementById('nCounts').innerHTML=c.kubun.concat(c.countOnly).map(k=>`
+    <div><div class="muted">${esc(k)}${c.countOnly.includes(k)?'（枚数のみ）':''}</div>
+    <input class="inp" type="number" inputmode="numeric" min="0" data-k="${esc(k)}" placeholder="0" oninput="docHints()"></div>`).join('')||'<div class="muted">「顧客」シートで区分を設定してください</div>';
+  document.getElementById('nDocs').innerHTML=c.docs.map(doc=>`
+    <div><div class="muted">${esc(doc.name)}</div>
+    <input class="inp" type="number" inputmode="numeric" min="0" data-d="${esc(doc.name)}" data-src="${esc(doc.src)}"></div>`).join('');
+  docHints();
+}
+function docHints(){
+  const v={}; let t=0; const c=S.init.customers.find(x=>x.name===document.getElementById('nCust').value);
+  document.querySelectorAll('#nCounts input').forEach(i=>{v[i.dataset.k]=+i.value||0; if(c.kubun.includes(i.dataset.k)) t+=+i.value||0;});
+  document.querySelectorAll('#nDocs input').forEach(i=>i.placeholder='自動：'+(i.dataset.src==='合計'?t:(v[i.dataset.src]||0)));
+}
+async function doCreate(b){
+  const counts={}; document.querySelectorAll('#nCounts input').forEach(i=>counts[i.dataset.k]=i.value);
+  const docCounts={}; document.querySelectorAll('#nDocs input').forEach(i=>{ if(i.value!=='') docCounts[i.dataset.d]=+i.value; });
+  const date=document.getElementById('nDate').value;
+  if(!date){toast('発送日を入れてください');return;}
+  b.disabled=true; b.textContent='作成中…';
+  try{
+    const d=await call('createRecord',{customer:document.getElementById('nCust').value,date,counts,docCounts});
+    S.init.records.unshift({id:d.id,customer:d.customer,date:d.date,total:total(d),progress:0});
+    S.rec=d; renderDetail();
+  }catch(e){ fail(e); b.disabled=false; b.textContent='作成する'; }
+}
+
+/* ---------- 詳細 ---------- */
+async function openRecord(id){
+  document.getElementById('app').innerHTML='<div class="loading">読み込み中…</div>';
+  try{ S.rec=await call('getRecord',id); renderDetail(); }catch(e){ fail(e); renderList(); }
+}
+function nameCell(c){ return c&&c.names&&c.names.length? esc(c.names.join('・')) : ''; }
+
+function renderDetail(){
+  S.view='detail'; const d=S.rec;
+  try{history.replaceState(null,'','#r='+d.id)}catch(e){}
+  const countOnly=d.kubun.filter(k=>!k.steps);
+  const p=progress(d);
+  document.getElementById('app').innerHTML=`
+    <div class="row" style="margin-top:12px">
+      <button class="btn ghost sm" onclick="reloadList()">← 一覧</button><span class="spacer"></span>
+      <button class="btn sm" onclick="refresh()">最新にする</button>
+      <button class="btn sm" onclick="renderPrint()">印刷用</button>
+      <button class="btn sm" onclick="editBasics()">枚数・日付を修正</button>
+    </div>
+    <div class="dhead">
+      <div class="t">【${esc(d.customer)}】</div><span class="spacer"></span>
+      <div class="s">${md(d.date)} 発送分</div>
+    </div>
+    <div class="sum">
+      ${stepKubun(d).map(k=>`<span class="chip">${esc(k.name)} <b>${k.count}</b>枚</span>`).join('')}
+      ${countOnly.map(k=>`<span class="chip">${esc(k.name)} <b>${k.count}</b>枚</span>`).join('')}
+      <span class="chip">進み具合 <b>${p}%</b></span>
+    </div>
+
+    <div class="card">
+      <h2>工程チェック <span class="muted">押して担当者を記録（黄色＝確認の工程）</span></h2>
+      ${stepKubun(d).map(k=>`
+        <div class="kb">
+          <div class="kh"><b>${esc(k.name)}</b><span class="muted">${k.count}枚</span></div>
+          <div class="groups">
+            ${GROUPS.map(([gt,gc,ss])=>`
+              <div class="grp ${gc}"><div class="gt">${gt}</div><div class="steps" style="--n:${ss.length}">
+                ${ss.map(s=>{const c=d.cells[k.name+'|'+s]; const n=nameCell(c);
+                  return `<button class="step ${KEY_STEPS.includes(s)?'key':''} ${n?'done':''}" onclick="pick('cell','${esc(k.name)}|${s}','${esc(k.name)}・${s}')">
+                    <span class="l">${s}</span><span class="n ${n?'':'none'}">${n||'—'}</span></button>`}).join('')}
+              </div></div>`).join('')}
+          </div>
+        </div>`).join('')}
+    </div>
+
+    <div class="card">
+      <h2>文書 <span class="muted">印刷はすべて白黒 ／ 枚数が違う・送らない文書は枚数を直接入力（0＝なし）</span></h2>
+      <div class="docs-wrap"><table class="docs">
+        <tr><th>文書</th><th style="text-align:right">枚数</th><th>印刷</th><th></th><th>折り</th><th></th></tr>
+        ${d.docs.map(doc=>{const n=docCount(d,doc); const ov=(d.docCounts||{})[doc.name];
+          return `<tr class="${n?'':'off'}">
+          <td>${esc(doc.name)}</td>
+          <td class="num"><input class="dcnt ${ov!=null?'ov':''}" type="number" inputmode="numeric" min="0" value="${n}" title="枚数が違うときは直接入力" onchange="setDocCount('${esc(doc.name)}',this.value)"></td>
+          <td>${esc(doc.side)}</td><td>${n?ck(doc.name+'|印刷'):'<span class="muted">なし</span>'}</td>
+          <td>${esc(doc.fold)}</td><td>${n?ck(doc.name+'|折り'):'<span class="muted">なし</span>'}</td></tr>`}).join('')}
+      </table></div>
+    </div>
+
+    <div class="card">
+      <h2>作業内容チェックリスト</h2>
+      <div class="work">
+        ${WORK_ITEMS.map(w=>{const c=d.work[w]; const n=nameCell(c);
+          return `<div><button class="wbtn ${n?'done':''}" onclick="pick('work','${w}','${w}')">
+            <span class="wl">${w}</span><span class="wn ${n?'':'none'}">${n?atMd(c.at)+'　'+n:'未記録'}</span></button></div>
+            <div>${workNotes(w,d)}</div>`}).join('')}
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>件数 <span class="muted">実際の発送件数（枚数と違うときだけ入力）</span></h2>
+      ${stepKubun(d).map(k=>`
+        <div class="cnt">
+          <div><b>${esc(k.name)}</b></div>
+          <input type="number" inputmode="numeric" min="0" placeholder="${k.count}" value="${d.sent[k.name]!=null?d.sent[k.name]:''}" onchange="setSent('${esc(k.name)}',this.value)">
+          <div class="formula">（ ${formula(sentOf(d,k),d.bundle||25)} ）</div>
+        </div>`).join('')}
+      <div class="total">${esc(d.customer)} 総発送件数：${stepKubun(d).reduce((s,k)=>s+sentOf(d,k),0)}
+        <span class="muted">（ ${stepKubun(d).map(k=>sentOf(d,k)).join(' + ')} ）</span></div>
+    </div>
+
+    <div class="card">
+      <h2>メモ</h2>
+      <textarea class="inp" rows="3" placeholder="差し替え・申し送りなど" onchange="saveField('memo','',this.value)">${esc(d.memo)}</textarea>
+    </div>
+
+    <div class="row" style="margin-top:24px"><span class="spacer"></span>
+      <button class="btn danger sm" onclick="delRec()">この発送分を削除</button></div>
+  `;
+}
+function ck(key){
+  const c=S.rec.docChecks[key];
+  return `<button class="ck ${c?'on':''}" onclick="toggleDoc('${esc(key)}')"><span class="box">${c?'✓':''}</span><span class="who">${c?esc(c.by||'')+' '+atMd(c.at):'未'}</span></button>`;
+}
+function workNotes(w,d){
+  const r=esc(d.reply||''), s=esc(d.send||''), m=esc(d.material||'');
+  switch(w){
+    case '印刷': return '<ul class="notes"><li><b>宛名</b>がはみ出す物は Word で編集して印刷＆差し替え</li><li>印刷後、発送の<b>日付</b>を確認</li></ul>';
+    case '折り': return '<ul class="notes"><li>文書番号の<b>順番</b>を崩さないように<br><small>※ 50ずつで分けると後の工程がラク</small></li></ul>';
+    case '封筒の準備': return `<ul class="notes"><li>返信用［<span class="red">${r}</span>］<br>送付用（<span class="red">${s}</span>）</li></ul>`;
+    case '材料の準備': return `<ul class="notes"><li>${m}（50ずつ）<br>返信用封筒［<span class="red">${r}</span>］、送付用封筒</li></ul>`;
+    case '撮影・確認': return `<ul class="notes"><li>責任者へLINE（${stepKubun(d).map(k=>esc(k.name)).join('と')} それぞれ）<br><small>※ 個人情報は隠す！</small></li></ul>`;
+    case '件数確認': return '<ul class="notes"><li>下の「件数」欄で総発送件数を確認</li></ul>';
+  }
+  return '';
+}
+
+/* ---------- 担当者を選ぶ ---------- */
+function pick(kind,key,title){
+  if(!needMe()) return;
+  const box=kind==='cell'?S.rec.cells:S.rec.work;
+  const cur=(box[key]&&box[key].names)||[];
+  S.modal={kind,key,sel:cur.slice()};
+  const staff=[me()].concat(S.init.staff.filter(n=>n!==me()));
+  cur.forEach(n=>{ if(!staff.includes(n)) staff.push(n); });
+  document.getElementById('sheet').innerHTML=`
+    <h3>${esc(title)}</h3>
+    <div class="muted">${cur.length?'記録済み：'+esc(cur.join('・'))+(box[key].at?'（'+esc(box[key].at)+'）':''):'まだ記録されていません'}</div>
+    <button class="btn primary big" style="margin-top:14px" onclick="saveNames([me()])">${esc(me())} で記録する</button>
+    <div class="muted" style="margin-top:14px">ほかの人・複数人のとき</div>
+    <div class="staff">${staff.map(n=>`<button class="${cur.includes(n)?'on':''}" onclick="togStaff(this,'${esc(n)}')">${esc(n)}</button>`).join('')}</div>
+    <div class="row">
+      ${cur.length?'<button class="btn danger" onclick="saveNames([])">記録を消す</button>':''}
+      <span class="spacer"></span>
+      <button class="btn" onclick="closeModal()">やめる</button>
+      <button class="btn primary" onclick="saveNames(S.modal.sel)">この内容で保存</button>
+    </div>`;
+  document.getElementById('mask').classList.add('show');
+}
+function togStaff(b,n){ const s=S.modal.sel; const i=s.indexOf(n); if(i>=0)s.splice(i,1); else s.push(n); b.classList.toggle('on'); }
+function closeModal(){ document.getElementById('mask').classList.remove('show'); S.modal=null; }
+function saveNames(names){
+  const {kind,key}=S.modal; closeModal();
+  const box=kind==='cell'?S.rec.cells:S.rec.work;
+  if(names.length) box[key]={names:names.slice(),at:new Date(Date.now()+9*3600e3).toISOString().slice(0,16).replace('T',' '),by:me()}; else delete box[key];
+  renderDetail();
+  saveField(kind,key,names);
+}
+function toggleDoc(key){
+  if(!needMe()) return;
+  const on=!S.rec.docChecks[key];
+  if(on) S.rec.docChecks[key]={on:true,by:me(),at:new Date(Date.now()+9*3600e3).toISOString().slice(0,16).replace('T',' ')}; else delete S.rec.docChecks[key];
+  renderDetail(); saveField('doc',key,on);
+}
+function setDocCount(k,v){ S.rec.docCounts=S.rec.docCounts||{}; if(v==='') delete S.rec.docCounts[k]; else S.rec.docCounts[k]=+v; renderDetail(); saveField('doccount',k,v); }
+function setSent(k,v){ if(v==='') delete S.rec.sent[k]; else S.rec.sent[k]=+v; renderDetail(); saveField('sent',k,v); }
+
+async function saveField(kind,key,value){
+  const id=S.rec.id;
+  try{
+    const d=await call('updateField',id,kind,key,value,me());
+    if(S.rec&&S.rec.id===id){ S.rec=d; if(S.view==='detail'&&!S.modal) renderDetail(); }
+    const r=S.init.records.find(x=>x.id===id); if(r){r.progress=progress(d);r.total=total(d);r.date=d.date;}
+    toast('保存しました');
+  }catch(e){ fail(e); }
+}
+async function refresh(){ if(!S.rec)return; try{ S.rec=await call('getRecord',S.rec.id); renderDetail(); toast('最新の状態にしました'); }catch(e){fail(e)} }
+
+/* ---------- 枚数・日付の修正 ---------- */
+function editBasics(){
+  const d=S.rec;
+  document.getElementById('sheet').innerHTML=`
+    <h3>枚数・日付を修正</h3>
+    <label class="f">発送日</label><input class="inp" type="date" id="eDate" value="${d.date}">
+    ${d.kubun.map(k=>`<label class="f">${esc(k.name)}</label><input class="inp" type="number" inputmode="numeric" data-k="${esc(k.name)}" value="${k.count}">`).join('')}
+    <div class="row" style="margin-top:16px"><span class="spacer"></span>
+      <button class="btn" onclick="closeModal()">やめる</button>
+      <button class="btn primary" onclick="saveBasics()">保存</button></div>`;
+  S.modal={kind:'basics'};
+  document.getElementById('mask').classList.add('show');
+}
+async function saveBasics(){
+  const counts={}; document.querySelectorAll('#sheet input[data-k]').forEach(i=>counts[i.dataset.k]=i.value);
+  const date=document.getElementById('eDate').value;
+  closeModal();
+  S.rec.kubun.forEach(k=>k.count=+counts[k.name]||0);
+  if(date&&date!==S.rec.date){ S.rec.date=date; await saveField('date','',date); }
+  renderDetail(); saveField('counts','',counts);
+}
+async function delRec(){
+  if(!confirm(`【${S.rec.customer}】${md(S.rec.date)} 発送分を削除します。元に戻せません。よろしいですか？`)) return;
+  try{ await call('deleteRecord',S.rec.id); S.init.records=S.init.records.filter(r=>r.id!==S.rec.id); toast('削除しました'); renderList(); }catch(e){fail(e)}
+}
+
+/* ---------- 印刷用（紙と同じ形） ---------- */
+function renderPrint(){
+  const d=S.rec; const nm=c=>c&&c.names&&c.names.length?esc(c.names.join(' ')):'';
+  const hcls=s=>['印刷','折り','準備','確認'].includes(s)?'h1':['件数確認','発送'].includes(s)?'h3':'h2';
+  const pv=document.getElementById('print');
+  pv.innerHTML=`<div class="pv">
+    <div class="pv-bar"><button class="btn" onclick="closePrint()">戻る</button><button class="btn primary" onclick="window.print()">印刷する</button></div>
+    <div class="ph"><h1>封入・封緘チェックリスト【${esc(d.customer)}】</h1><div class="s">${md(d.date)}　発送分</div></div>
+    <table>
+      <tr><th rowspan="2" style="width:13%"></th><th rowspan="2" style="width:7%">枚数</th>
+        <th colspan="4" class="h1">下準備</th><th colspan="5" class="h2">封入・封緘</th><th colspan="2" class="h3">発送</th></tr>
+      <tr>${STEPS.map(s=>`<th class="${KEY_STEPS.includes(s)?'y':hcls(s)}">${s}</th>`).join('')}</tr>
+      ${d.kubun.map(k=>`<tr><td class="left">${esc(k.name)}</td><td>${k.count||''}</td>
+        ${STEPS.map(s=>`<td>${k.steps?nm(d.cells[k.name+'|'+s]):'-'}</td>`).join('')}</tr>`).join('')}
+    </table>
+    <div class="two">
+      <table style="width:62%">
+        <tr><th></th><th colspan="3">印刷（すべて白黒）</th><th colspan="2">折り</th></tr>
+        ${d.docs.map(doc=>`<tr><td class="left">${esc(doc.name)}</td>
+          <td>${!docCount(d,doc)?'-':d.docChecks[doc.name+'|印刷']?'☑':'☐'}</td><td>${docCount(d,doc)}</td><td>${esc(doc.side)}</td>
+          <td>${!docCount(d,doc)?'-':d.docChecks[doc.name+'|折り']?'☑':'☐'}</td><td>${esc(doc.fold)}</td></tr>`).join('')}
+      </table>
+    </div>
+    <div class="box"><div class="bt">作業内容チェックリスト</div>
+      ${WORK_ITEMS.map(w=>{const c=d.work[w];return `<div class="wi"><div><div class="wl">${w}</div>${c?atMd(c.at)+'　'+nm(c):''}</div><div>${workNotes(w,d)}</div></div>`}).join('')}
+      <div class="wi"><div><div class="wl">件数（内訳）</div></div><div>
+        ${esc(d.customer)} 総発送件数：（ ${stepKubun(d).map(k=>sentOf(d,k)).join(' + ')} ）<br>
+        ${stepKubun(d).map(k=>`${esc(k.name)}：（ ${formula(sentOf(d,k),d.bundle||25)} ）`).join('<br>')}
+        ${d.memo?'<br><br>メモ：'+esc(d.memo):''}</div></div>
+    </div>
+  </div>`;
+  document.getElementById('app').style.display='none';
+  pv.style.display='block'; window.scrollTo(0,0);
+}
+function closePrint(){ document.getElementById('print').style.display='none'; document.getElementById('app').style.display=''; }
+
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&S.view==='detail'&&!S.modal) refresh(); });
+
+/* ---------- プレビュー用のダミー（Apps Script上では使われません） ---------- */
+const MOCK=(()=>{
+  const cust={name:'京都広域',kubun:['マッサージ','鍼灸'],countOnly:['重複分'],reply:'2',send:'京都専用',material:'お尋ね文書、回答書、パンフレット',bundle:25,
+    docs:[{name:'お尋ね文書（マッサージ）',src:'マッサージ',side:'片面',fold:'変形'},{name:'回答書（マッサージ）',src:'マッサージ',side:'両面',fold:'内3'},
+      {name:'お尋ね文書（鍼灸）',src:'鍼灸',side:'片面',fold:'変形'},{name:'回答書（鍼灸）',src:'鍼灸',side:'両面',fold:'内3'},{name:'啓発文書',src:'合計',side:'両面',fold:'内3'}]};
+  const at='2026-08-31 10:00';
+  const c=n=>({names:n,at,by:n[0]});
+  const r={id:'demo0831',customer:'京都広域',date:'2026-08-31',kubun:[{name:'マッサージ',count:185,steps:true},{name:'鍼灸',count:148,steps:true},{name:'重複分',count:0,steps:false}],
+    docs:cust.docs,reply:'2',send:'京都専用',material:cust.material,bundle:25,
+    cells:{'マッサージ|印刷':c(['大城']),'マッサージ|折り':c(['知花']),'マッサージ|準備':c(['知花']),'マッサージ|確認':c(['大城']),'マッサージ|封入':c(['高良','高野']),'マッサージ|重さ':c(['知花']),'マッサージ|4点確認':c(['大城','高野']),
+      '鍼灸|印刷':c(['大城']),'鍼灸|折り':c(['知花']),'鍼灸|準備':c(['知花']),'鍼灸|確認':c(['大城']),'鍼灸|封入':c(['知花'])},
+    docChecks:{},work:{'印刷':c(['大城']),'折り':c(['知花']),'封筒の準備':c(['知花'])},sent:{'マッサージ':179},memo:''};
+  cust.docs.forEach(x=>{r.docChecks[x.name+'|印刷']={on:true,by:'大城',at};r.docChecks[x.name+'|折り']={on:true,by:'知花',at};});
+  const recs={demo0831:r};
+  const list=()=>Object.values(recs).map(x=>({id:x.id,customer:x.customer,date:x.date,total:total(x),progress:progress(x)}));
+  return {
+    getInit:()=>({customers:[cust],staff:['大城','知花','高良','高野'],records:list()}),
+    getRecord:id=>JSON.parse(JSON.stringify(recs[id])),
+    createRecord:p=>{const id=Math.random().toString(36).slice(2,10);recs[id]={id,customer:p.customer,date:p.date,
+      kubun:cust.kubun.map(k=>({name:k,count:+p.counts[k]||0,steps:true})).concat(cust.countOnly.map(k=>({name:k,count:+p.counts[k]||0,steps:false}))),
+      docs:cust.docs,docCounts:p.docCounts||{},reply:cust.reply,send:cust.send,material:cust.material,bundle:25,cells:{},docChecks:{},work:{},sent:{},memo:''};return JSON.parse(JSON.stringify(recs[id]));},
+    updateField:(id,kind,key,value,by)=>{const d=recs[id];
+      if(kind==='cell'||kind==='work'){const b=kind==='cell'?d.cells:d.work; if(value.length)b[key]={names:value,at:'2026-10-29 16:30',by}; else delete b[key];}
+      else if(kind==='doc'){ if(value)d.docChecks[key]={on:true,by,at:'2026-10-29 16:30'}; else delete d.docChecks[key]; }
+      else if(kind==='sent'){ if(value==='')delete d.sent[key]; else d.sent[key]=+value; }
+      else if(kind==='doccount'){ d.docCounts=d.docCounts||{}; if(value==='')delete d.docCounts[key]; else d.docCounts[key]=+value; }
+      else if(kind==='memo') d.memo=value; else if(kind==='date') d.date=value;
+      else if(kind==='counts') d.kubun.forEach(k=>{if(value[k.name]!==undefined)k.count=+value[k.name]||0;});
+      return JSON.parse(JSON.stringify(d));},
+    deleteRecord:id=>{delete recs[id];return true;}
+  };
+})();
+
+(function(){var n=new Date(),W=["日","月","火","水","木","金","土"],el=document.getElementById("todayLabel");if(el)el.textContent=n.getFullYear()+"年"+(n.getMonth()+1)+"月"+n.getDate()+"日（"+W[n.getDay()]+"）";})();
+if(IN_PWA)document.getElementById("backMenu").hidden=false;
+if(KEY) boot(); else showGate("");
+</script>
+</body>
+</html>

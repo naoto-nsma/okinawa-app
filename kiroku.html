@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>入退室・施錠・留守電｜N-SMART 沖縄事務所</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="N-SMART沖縄">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f5f2fb">
+<script src="config.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=BIZ+UDGothic:wght@700&display=swap">
+<style>
+
+:root{
+  --bg:#eef4fb; --surface:#ffffff; --line:#d2e0ef; --fg:#221d2e; --muted:#655d75;
+  --accent:#2c6aa8; --accent-fg:#ffffff; --accent-soft:#dde9f6;
+  --ok:#2f7a4b; --ok-soft:#e2f1e7; --warn:#a35a00; --warn-soft:#fbeedb; --idle-soft:#e8eff7;
+  --danger:#b23a3a; --weekend:#f6f9fd;
+  --font:"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --num:"BIZ UDGothic","Hiragino Sans","Meiryo",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121922; --surface:#1b2430; --line:#2f3c4c; --fg:#e8edf2; --muted:#9aa7b4;
+  --accent:#7fb2e6; --accent-fg:#0e1722; --accent-soft:#1f3044;
+  --ok:#6cc18c; --ok-soft:#1c3326; --warn:#f0a94a; --warn-soft:#3a2b16; --idle-soft:#222d3a;
+  --danger:#ee7b7b; --weekend:#161e28; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121922; --surface:#1b2430; --line:#2f3c4c; --fg:#e8edf2; --muted:#9aa7b4;
+  --accent:#7fb2e6; --accent-fg:#0e1722; --accent-soft:#1f3044;
+  --ok:#6cc18c; --ok-soft:#1c3326; --warn:#f0a94a; --warn-soft:#3a2b16; --idle-soft:#222d3a;
+  --danger:#ee7b7b; --weekend:#161e28; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:calc(12px + env(safe-area-inset-top,0px)) calc(40px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+h1{font-size:1.35rem;margin:0;text-wrap:balance}
+.today{font-family:var(--num);color:var(--muted);font-size:.95rem}
+nav{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:4px}
+nav button{flex:1;border:0;background:none;font:inherit;font-weight:700;color:var(--muted);padding:10px 6px;border-radius:7px;cursor:pointer}
+nav button[aria-selected="true"]{background:var(--accent);color:var(--accent-fg)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.notice{border-radius:10px;padding:12px 14px;font-size:.95rem}
+.notice.warn{background:var(--warn-soft);color:var(--warn);font-weight:700}
+.notice.info{background:var(--accent-soft)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.cab{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.cab-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.cab-name{font-size:1.15rem;font-weight:700}
+.cab-name small{display:block;font-size:.8rem;color:var(--muted);font-weight:400}
+.pill{font-size:.85rem;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.pill.idle{background:var(--idle-soft);color:var(--muted)}
+.pill.open{background:var(--warn-soft);color:var(--warn)}
+.pill.closed{background:var(--ok-soft);color:var(--ok)}
+.rows{display:grid;grid-template-columns:auto 1fr auto;gap:2px 12px;font-size:.95rem}
+.rows dt{color:var(--muted)} .rows dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.rows .t{font-family:var(--num);font-variant-numeric:tabular-nums}
+.big{width:100%;font:inherit;font-weight:700;font-size:1.1rem;padding:14px;border-radius:10px;border:0;cursor:pointer}
+.big.open{background:var(--accent);color:var(--accent-fg)}
+.big.close{background:var(--warn);color:var(--surface)}
+.big.done{background:var(--idle-soft);color:var(--muted);font-size:.95rem;padding:10px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar input,.toolbar select,.field input,.field select{font:inherit;padding:9px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.seg{display:flex;flex-wrap:wrap;gap:4px}
+.seg button{font:inherit;font-size:.95rem;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-weight:700}
+.btn{font:inherit;font-weight:700;padding:9px 14px;border-radius:8px;border:1px solid var(--accent);background:var(--surface);color:var(--accent);cursor:pointer}
+.btn.primary{background:var(--accent);color:var(--accent-fg)}
+.btn.ghost{border-color:var(--line);color:var(--muted)}
+.btn.danger{border-color:var(--danger);color:var(--danger)}
+.tablebox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:.95rem}
+caption{text-align:left;padding:12px 14px;font-weight:700}
+th,td{border-top:1px solid var(--line);padding:8px 12px;text-align:left}
+th{font-size:.82rem;color:var(--muted);font-weight:700;letter-spacing:.04em;background:var(--surface)}
+td.t,td.d{font-family:var(--num);font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.we td{background:var(--weekend)}
+tr.row{cursor:pointer} tr.row:hover td{background:var(--accent-soft)}
+tr.today td:first-child{box-shadow:inset 4px 0 0 var(--accent)}
+.miss{color:var(--warn);font-weight:700}
+.empty{color:var(--muted)}
+.help{color:var(--muted);font-size:.9rem;margin:0}
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(10,15,20,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20;
+  padding:0 max(0px,env(safe-area-inset-right,0px)) 0 max(0px,env(safe-area-inset-left,0px))}
+.sheet{background:var(--surface);width:100%;max-width:520px;border-radius:16px 16px 0 0;padding:18px max(16px,env(safe-area-inset-left,0px)) calc(18px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;max-height:90vh;overflow:auto}
+@media (min-width:600px){.scrim{align-items:center}.sheet{border-radius:16px}}
+.sheet h2{margin:0;font-size:1.15rem}
+.names{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px}
+.names button{font:inherit;font-weight:700;padding:14px 8px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;overflow-wrap:anywhere}
+.names button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0} .field input,.field select{width:100%;min-width:0} .field label{font-size:.85rem;color:var(--muted);font-weight:700}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.toast{white-space:nowrap;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:700;z-index:30}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(16px);opacity:.6}}}
+/* 合言葉 */
+.back{display:block;font-size:.85rem;font-weight:700;color:var(--accent);text-decoration:none;margin-bottom:2px}
+#gate{position:fixed;inset:0;z-index:40;background:var(--bg);display:flex;align-items:center;justify-content:center;
+  padding:max(24px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(24px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.gate-box{width:100%;max-width:380px;display:flex;flex-direction:column;gap:14px;text-align:center}
+.gate-box h2{margin:0;font-size:1.2rem}
+.gate-icon svg{width:88px;height:88px;border-radius:20px;display:block;margin:0 auto}
+#gateKey{font:inherit;font-size:1.1rem;padding:14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);text-align:center}
+/* 入退室 */
+nav button small{display:block;font-size:.72rem;font-weight:400;line-height:1.2}
+.exdate{font-size:1.2rem;font-weight:700;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.checks{display:flex;flex-direction:column;gap:6px}
+.checks label{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-weight:700;color:var(--fg)}
+.checks label.on{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.checks input{width:20px;height:20px;margin:0;accent-color:var(--ok)}
+table.ex{min-width:640px}
+table.ex th,table.ex td{border:1px solid var(--line);text-align:center;padding:6px 6px}
+table.ex th,table.ex td{white-space:nowrap}
+table.ex th.ckh{font-size:.72rem;letter-spacing:0;min-width:64px;white-space:normal}
+body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.ph{display:none}
+@media print{
+  @page{size:A4 portrait;margin:10mm}
+  :root{color-scheme:light}
+  body{background:#fff!important;color:#000!important;padding:0!important;font-size:11px}
+  header,nav,#status,.toolbar,.seg,.help,.noprint,.toast,#sheetRoot,#view-entry,#view-today{display:none!important}
+  .ph{display:block;margin-bottom:6px;color:#000} .ph-t{font-size:15px;font-weight:700;margin:2px 0} .ph-m{text-align:right}
+  .tablebox{border:none!important;overflow:visible!important;background:#fff!important}
+  table.ex{min-width:0!important;font-size:10.5px}
+  table.ex th,table.ex td{border:1px solid #000!important;padding:3px 2px;color:#000!important;background:#fff!important}
+  table.ex th,table.ex td{font-size:10.5px!important;font-family:var(--font)!important;line-height:1.4}
+  table.ex th.ckh{min-width:0}
+  tr.today td:first-child{box-shadow:none!important}
+  .miss{display:none}
+}
+</style>
+</head><body>
+<div class="wrap">
+  <header>
+    <h1><a id="backMenu" class="back" href="index.html" hidden>‹ メニュー</a>入退室・施錠・留守電記録</h1>
+    <span class="today" id="todayLabel"></span>
+  </header>
+  <nav role="tablist">
+    <button id="tab-entry" role="tab" aria-selected="true" data-tab="entry">入退室</button>
+    <button id="tab-today" role="tab" aria-selected="false" data-tab="today">今日の記録<small>キャビネット・留守電</small></button>
+    <button id="tab-month" role="tab" aria-selected="false" data-tab="month">月別一覧</button>
+  </nav>
+  <div id="status"></div>
+  <section id="view-entry"></section>
+  <section id="view-today" hidden></section>
+  <section id="view-month" hidden></section>
+</div>
+<div id="sheetRoot"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+let CABS=[];
+const APP_MOD="kiroku";
+/* ---- 通信と合言葉（N-SMART 沖縄事務所アプリ共通） ---- */
+const IN_GAS=!!(window.google&&google.script&&google.script.run);
+const API_URL=((window.APP_CONFIG||{}).urls||{})[APP_MOD]||"";
+let KEY="";try{KEY=localStorage.getItem("passKey")||""}catch(e){}
+function errCode(e){const m=String((e&&e.message)||e||"");const k=m.match(/(BADKEY|NOKEY|BUSY):/);return k?k[1]:""}
+function errText(e){return String((e&&e.message)||e||"").replace(/^.*?(BADKEY|NOKEY|BUSY):/,"")}
+function rawRpc(fn,args,key){
+  if(IN_GAS)return new Promise((ok,ng)=>google.script.run.withSuccessHandler(ok).withFailureHandler(ng).rpc(fn,args,key));
+  if(!API_URL){
+    if(typeof MOCK!=="undefined"&&MOCK[fn])return new Promise((ok,ng)=>{try{ok(MOCK[fn](...args))}catch(e){ng(e)}});
+    if(fn==="ping"&&typeof MOCK!=="undefined")return Promise.resolve(true);
+    return Promise.reject(new Error("設定ファイル（config.js）にURLが入っていません"));
+  }
+  return fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({fn,args,key})})
+    .then(r=>r.json()).then(j=>{if(!j.ok)throw new Error(j.error);return j.data});
+}
+function rpc(fn,args){return rawRpc(fn,args||[],KEY).catch(e=>{const c=errCode(e);if(c==="BADKEY"||c==="NOKEY")showGate(c==="NOKEY"?errText(e):"合言葉が変わりました。新しい合言葉を入力してください。");throw e})}
+function gateEsc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function showGate(msg){
+  if(document.getElementById("gate"))return;
+  if(!document.getElementById("gateCss")){const st=document.createElement("style");st.id="gateCss";st.textContent=`
+#gate{position:fixed;inset:0;z-index:100;background:#f5f2fb;color:#221d2e;display:flex;align-items:center;justify-content:center;
+ padding:max(24px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(24px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+ font-family:"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",Meiryo,system-ui,sans-serif}
+#gate form{width:100%;max-width:380px;display:flex;flex-direction:column;gap:14px;text-align:center}
+#gate h2{margin:0;font-size:1.2rem}#gate p{margin:0;color:#5d6a78;font-size:.92rem;line-height:1.6}
+#gate .gi svg{width:88px;height:88px;border-radius:20px;display:block;margin:0 auto}
+#gate input{font:inherit;font-size:1.1rem;padding:14px;border-radius:10px;border:1px solid #ddd5ee;background:#fff;color:#1d2733;text-align:center}
+#gate button{font:inherit;font-weight:700;font-size:1.1rem;padding:14px;border-radius:10px;border:0;background:#6a4fa3;color:#fff;cursor:pointer}
+#gate .ge{color:#a35a00;font-weight:700}
+@media (prefers-color-scheme:dark){#gate{background:#17141f;color:#ece8f4}#gate p{color:#9aa7b4}#gate input{background:#211c2c;border-color:#3a3249;color:#e8edf2}#gate button{background:#b49be6;color:#1a1424}#gate .ge{color:#f0a94a}}`;document.head.appendChild(st)}
+  const d=document.createElement("div");d.id="gate";
+  d.innerHTML=`<form id="gateForm" autocomplete="off">
+    <div class="gi" aria-hidden="true">${ICON_SVG}</div>
+    <h2>N-SMART 沖縄事務所</h2>
+    <p>はじめに、管理者から伝えられた合言葉を入力してください。次からは入力しなくても開けます。</p>
+    <input id="gateKey" type="password" autocapitalize="off" spellcheck="false" placeholder="合言葉" aria-label="合言葉">
+    <p id="gateErr" class="ge"${msg?"":" hidden"}>${gateEsc(msg||"")}</p>
+    <button id="gateBtn">はじめる</button></form>`;
+  document.body.appendChild(d);
+  d.querySelector("form").addEventListener("submit",async e=>{
+    e.preventDefault();
+    const v=d.querySelector("#gateKey").value.trim(),err=d.querySelector("#gateErr"),btn=d.querySelector("#gateBtn");
+    if(!v){err.textContent="合言葉を入力してください。";err.hidden=false;return}
+    btn.disabled=true;btn.textContent="確認しています…";err.hidden=true;
+    try{await rawRpc("ping",[],v);try{localStorage.setItem("passKey",v)}catch(x){}KEY=v;location.reload()}
+    catch(x){btn.disabled=false;btn.textContent="はじめる";const c=errCode(x);
+      err.textContent=c==="BADKEY"?"合言葉が違います。もう一度確かめてください。":c?errText(x):"つながりませんでした。電波のよい所で、もう一度押してください。";err.hidden=false}
+  });
+  setTimeout(()=>{const i=document.getElementById("gateKey");if(i)i.focus()},50);
+}
+const ICON_SVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1fa5c4"/><stop offset="1" stop-color="#0b6f9c"/></linearGradient></defs><rect width="100" height="100" fill="url(#sea)"/><circle cx="36" cy="58" r="14" fill="none" stroke="#fff" stroke-width="7"/><path d="M46 48 L74 20 M64 30 l8 8 M70 24 l7 7" stroke="#fff" stroke-width="7" stroke-linecap="round"/><g transform="translate(70 72)"> <g fill="#e63946">  <ellipse rx="9" ry="13" transform="rotate(0) translate(0 -10)"/><ellipse rx="9" ry="13" transform="rotate(72) translate(0 -10)"/>  <ellipse rx="9" ry="13" transform="rotate(144) translate(0 -10)"/><ellipse rx="9" ry="13" transform="rotate(216) translate(0 -10)"/>  <ellipse rx="9" ry="13" transform="rotate(288) translate(0 -10)"/></g> <circle r="4.5" fill="#9b1d2a"/><path d="M0 0 L-9 -14" stroke="#ffd166" stroke-width="2.4" stroke-linecap="round"/><circle cx="-9" cy="-14" r="2.6" fill="#ffd166"/></g></svg>`;
+/* PWAから開いたときだけ「メニューに戻る」を出す */
+const IN_PWA=!IN_GAS&&!!API_URL;
+
+const WD=["日","月","火","水","木","金","土"];
+const pad=n=>String(n).padStart(2,"0");
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const hm=d=>`${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const $=id=>document.getElementById(id);
+const cabName=id=>CABS.find(c=>c.id===id)?.name||id;
+const cabOf=id=>CABS.find(c=>c.id===id)||{name:id,open:"開錠",close:"施錠"};
+
+let ready=false, staff=[], tab="entry", logs={}, busy=false;
+let todayStr=ymd(new Date()), viewMonth=todayStr.slice(0,7), viewCab="A";
+let lastName="";
+try{lastName=localStorage.getItem("lastName")||""}catch(e){}
+try{const t=localStorage.getItem("viewCab");if(t)viewCab=t}catch(e){}
+
+function months(){const n=new Date(),p=new Date(n.getFullYear(),n.getMonth()-1,1);return [...new Set([ymd(n).slice(0,7),ymd(p).slice(0,7),viewMonth])]}
+function apply(res){staff=res.staff||[];CABS=res.cabs||[];if(CABS.length&&viewCab!=="__ex"&&!CABS.some(c=>c.id===viewCab))viewCab=CABS[0].id;logs={};(res.records||[]).forEach(r=>logs[`${r.date}_${r.cab}`]=r);ready=true;setStatus("");render()}
+function call(fn,...args){return rpc(fn,[...args,months()])}
+async function load(){try{apply(await call("getData"))}catch(e){if(errCode(e))return;setStatus("記録を読み込めませんでした。ページを開き直してください。","warn")}}
+function toast(msg){const t=$("toast");t.textContent=msg;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2200)}
+function rec(date,cab){return logs[`${date}_${cab}`]||null}
+function setStatus(msg,kind){$("status").innerHTML=msg?`<div class="notice ${kind}">${esc(msg)}</div>`:""}
+
+function renderToday(){
+  const now=new Date(); todayStr=ymd(now);
+  $("todayLabel").textContent=`${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日（${WD[now.getDay()]}）`;
+  const el=$("view-today");
+  if(!ready){el.innerHTML=`<p class="empty">記録を読み込んでいます…</p>`;return}
+  const left=Object.values(logs).filter(r=>r.openAt&&!r.closeAt&&r.date<todayStr).sort((a,b)=>a.date<b.date?-1:1);
+  let h="";
+  if(left.length)h+=`<div class="notice warn" style="margin-bottom:12px">記録が終わっていない日があります：${left.map(r=>`${esc(cabName(r.cab))} ${+r.date.slice(5,7)}/${+r.date.slice(8)}（${esc(cabOf(r.cab).close)}）`).join("、")}　→ 月別一覧で確認してください</div>`;
+  if(!staff.length)h+=`<div class="notice info" style="margin-bottom:12px">名前が登録されていません。管理者に連絡してください。</div>`;
+  h+=`<div class="grid">`+CABS.map(c=>{
+    const r=rec(todayStr,c.id);
+    const st=!r||!r.openAt?"idle":(r.closeAt?"closed":"open");
+    const pill={idle:`未${c.open}`,open:`${c.open}中`,closed:`${c.close}済`}[st];
+    const btn=st==="idle"?`<button class="big open" data-act="open" data-cab="${esc(c.id)}">${esc(c.open)}する</button>`
+      :st==="open"?`<button class="big close" data-act="close" data-cab="${esc(c.id)}">${esc(c.close)}する</button>`
+      :`<button class="big done" data-act="edit" data-cab="${esc(c.id)}" data-date="${todayStr}">記録を直す</button>`;
+    return `<article class="cab"><div class="cab-head"><div class="cab-name">${esc(c.name)}<small>${esc(c.kind)}</small></div><span class="pill ${st}">${pill}</span></div>
+      <dl class="rows"><dt>${esc(c.open)}</dt><dd>${esc(r?.openBy)||"—"}</dd><dd class="t">${esc(r?.openAt)||""}</dd>
+      <dt>${esc(c.close)}</dt><dd>${esc(r?.closeBy)||"—"}</dd><dd class="t">${esc(r?.closeAt)||""}</dd></dl>${btn}</article>`;
+  }).join("")+`</div>`;
+  el.innerHTML=h;
+}
+
+function renderMonth(){
+  const el=$("view-month");
+  const [y,m]=viewMonth.split("-").map(Number);
+  const days=new Date(y,m,0).getDate(), vc=cabOf(viewCab);
+  if(viewCab==="__ex"){el.innerHTML=`<div class="wrap" style="gap:12px">${monthTools()}${exMonthHtml(y,m,days)}</div>`;return}
+  let rows="";
+  for(let d=1;d<=days;d++){
+    const date=`${viewMonth}-${pad(d)}`, wd=new Date(y,m-1,d).getDay(), r=rec(date,viewCab);
+    const miss=r?.openAt&&!r?.closeAt&&date<todayStr;
+    rows+=`<tr class="row${wd===0||wd===6?" we":""}${date===todayStr?" today":""}" data-date="${date}" tabindex="0">
+      <td class="d">${d}（${WD[wd]}）</td><td>${esc(r?.openBy)}</td><td class="t">${esc(r?.openAt)}</td>
+      <td>${esc(r?.closeBy)}${miss?`<span class="miss">未記録</span>`:""}</td><td class="t">${esc(r?.closeAt)}</td></tr>`;
+  }
+  el.innerHTML=`<div class="wrap" style="gap:12px">${monthTools()}
+    <div class="tablebox"><table><caption>${esc(cabName(viewCab))}　${y}年${m}月</caption>
+      <thead><tr><th>日付</th><th>${esc(vc.open)}者</th><th>${esc(vc.open)}時間</th><th>${esc(vc.close)}者</th><th>${esc(vc.close)}時間</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="help">行をタップすると、その日の記録を入力・修正できます。記録はスプレッドシートの「記録」シートにも残ります。</p></div>`;
+}
+function monthTools(){return `<div class="toolbar"><button class="btn ghost" data-mv="-1">‹ 前月</button>
+      <input type="month" id="monthPick" value="${viewMonth}" aria-label="表示する月">
+      <button class="btn ghost" data-mv="1">次月 ›</button></div>
+    <div class="seg" role="group" aria-label="項目"><button data-cabsel="__ex" aria-pressed="${viewCab==="__ex"}">入退室</button>${CABS.map(c=>`<button data-cabsel="${esc(c.id)}" aria-pressed="${c.id===viewCab}">${esc(c.name)}</button>`).join("")}</div>`}
+async function changeMonth(m){viewMonth=m;exLink="";renderMonth();if(viewCab==="__ex")exLoad(m);await load()}
+
+
+function render(){
+  for(const t of ["entry","today","month"]){$("view-"+t).hidden=t!==tab;$("tab-"+t).setAttribute("aria-selected",t===tab)}
+  renderToday(); if(tab==="entry")renderEntry(); if(tab==="month")renderMonth();
+}
+
+let sheet=null;
+function openSheet(mode,cab,date){
+  const r=rec(date,cab)||{}, now=hm(new Date());
+  sheet={mode,cab,date,openBy:r.openBy||"",openAt:r.openAt||"",closeBy:r.closeBy||"",closeAt:r.closeAt||""};
+  const def=lastName&&staff.includes(lastName)?lastName:"";
+  if(mode==="open"){sheet.openBy=def;sheet.openAt=now}
+  if(mode==="close"){sheet.closeBy=def;sheet.closeAt=now}
+  drawSheet();
+}
+function nameButtons(key){
+  const list=[...staff].sort((a,b)=>(b===lastName)-(a===lastName));
+  if(!list.length)return `<p class="help">名前が登録されていません。下の欄に名前を入力してください。</p>`;
+  return `<div class="names">${list.map(n=>`<button type="button" data-pick="${key}" data-name="${esc(n)}" aria-pressed="${sheet[key]===n}">${esc(n)}</button>`).join("")}</div>`;
+}
+function drawSheet(){
+  const s=sheet; if(!s){$("sheetRoot").innerHTML="";return}
+  const cc=cabOf(s.cab);
+  const [,mm,dd]=s.date.split("-");
+  const title=s.mode==="open"?`${cc.name} を${cc.open}`:s.mode==="close"?`${cc.name} を${cc.close}`:`${cabName(s.cab)}　${+mm}月${+dd}日の記録`;
+  let body="";
+  if(s.mode==="open"||s.mode==="close"){
+    const k=s.mode==="open"?"openBy":"closeBy", t=s.mode==="open"?"openAt":"closeAt";
+    body=`<div class="field"><label>だれが${esc(s.mode==="open"?cc.open:cc.close)}しましたか</label>${nameButtons(k)}</div>
+      <div class="pair"><div class="field"><label for="sOther">名前（一覧にない場合）</label><input id="sOther" data-k="${k}" value="${staff.includes(s[k])?"":esc(s[k])}" maxlength="20"></div>
+      <div class="field"><label for="sTime">時間</label><input id="sTime" type="time" data-k="${t}" value="${esc(s[t])}"></div></div>`;
+  }else{
+    const opts=v=>`<option value=""></option>`+[...new Set([...staff,v].filter(Boolean))].map(n=>`<option${n===v?" selected":""}>${esc(n)}</option>`).join("");
+    body=`<div class="pair"><div class="field"><label for="eOB">${esc(cc.open)}者</label><select id="eOB" data-k="openBy">${opts(s.openBy)}</select></div>
+      <div class="field"><label for="eOA">${esc(cc.open)}時間</label><input id="eOA" type="time" data-k="openAt" value="${esc(s.openAt)}"></div>
+      <div class="field"><label for="eCB">${esc(cc.close)}者</label><select id="eCB" data-k="closeBy">${opts(s.closeBy)}</select></div>
+      <div class="field"><label for="eCA">${esc(cc.close)}時間</label><input id="eCA" type="time" data-k="closeAt" value="${esc(s.closeAt)}"></div></div>
+      ${s.confirmDel?`<div class="notice warn">この日の記録を消します。よろしいですか？ <button class="btn danger" data-sheet="delyes">消す</button> <button class="btn ghost" data-sheet="delno">やめる</button></div>`:""}`;
+  }
+  const ok=s.mode==="open"?`${cc.open}を記録`:s.mode==="close"?`${cc.close}を記録`:"保存";
+  $("sheetRoot").innerHTML=`<div class="scrim" data-sheet="cancel"><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+    <h2>${esc(title)}</h2>${body}<p id="sErr" class="miss" hidden></p>
+    <div class="actions">${s.mode==="edit"&&rec(s.date,s.cab)?`<button class="btn danger" data-sheet="del" style="margin-right:auto">記録を消す</button>`:""}
+    <button class="btn ghost" data-sheet="cancel">やめる</button><button class="btn primary" data-sheet="save">${busy?"保存中…":ok}</button></div></div></div>`;
+}
+async function saveSheet(){
+  if(busy)return;
+  const s=sheet, err=$("sErr");
+  const need=s.mode==="open"?["openBy","openAt"]:s.mode==="close"?["closeBy","closeAt"]:[];
+  const miss=need.find(k=>!s[k]);
+  if(miss){err.textContent=miss.endsWith("By")?"名前を選んでください。":"時間を入れてください。";err.hidden=false;return}
+  const nm=s.mode==="open"?s.openBy:s.mode==="close"?s.closeBy:"";
+  busy=true;drawSheet();
+  try{
+    apply(await call("saveRecord",{date:s.date,cab:s.cab,openBy:s.openBy,openAt:s.openAt,closeBy:s.closeBy,closeAt:s.closeAt}));
+    if(nm){lastName=nm;try{localStorage.setItem("lastName",nm)}catch(e){}}
+    busy=false;sheet=null;drawSheet();
+    toast(s.mode==="open"?`${cabName(s.cab)}の${cabOf(s.cab).open}を記録しました`:s.mode==="close"?`${cabName(s.cab)}の${cabOf(s.cab).close}を記録しました`:"保存しました");
+  }catch(e){busy=false;drawSheet();const er=$("sErr");er.textContent="保存できませんでした。通信状態を確認して、もう一度押してください。";er.hidden=false}
+}
+
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("button,[data-sheet],[data-exs],tr.row"); if(!b)return;
+  if(b.dataset.tab){tab=b.dataset.tab;render();return}
+  if(b.dataset.act){openSheet(b.dataset.act,b.dataset.cab,b.dataset.date||todayStr);return}
+  if(b.matches("tr.row")){if(viewCab==="__ex"){tab="entry";exDate=b.dataset.date;render();scrollTo(0,0)}else openSheet("edit",viewCab,b.dataset.date);return}
+  if(b.dataset.mv){const [y,m]=viewMonth.split("-").map(Number);changeMonth(ymd(new Date(y,m-1+Number(b.dataset.mv),1)).slice(0,7));return}
+  if(b.dataset.cabsel){viewCab=b.dataset.cabsel;try{localStorage.setItem("viewCab",viewCab)}catch(e){}renderMonth();return}
+  if(b.dataset.pick){sheet[b.dataset.pick]=b.dataset.name;drawSheet();return}
+  if(exClick(b,e))return;
+  const sa=b.dataset.sheet;
+  if(sa==="cancel"&&e.target===b&&!busy){sheet=null;drawSheet();return}
+  if(sa==="save"){saveSheet();return}
+  if(sa==="del"){sheet.confirmDel=true;drawSheet();return}
+  if(sa==="delno"){sheet.confirmDel=false;drawSheet();return}
+  if(sa==="delyes"){try{apply(await call("deleteRecord",sheet.date,sheet.cab));sheet=null;drawSheet();toast("記録を消しました")}catch(err){toast("消せませんでした")}return}
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"&&sheet&&!busy){sheet=null;drawSheet()}
+  if(e.key==="Escape"&&exSheet&&!exBusy){exSheet=null;exDraw()}
+  if(e.key==="Enter"&&e.target.matches("tr.row")){if(viewCab==="__ex"){tab="entry";exDate=e.target.dataset.date;render()}else openSheet("edit",viewCab,e.target.dataset.date)}
+});
+document.addEventListener("input",e=>{
+  const k=e.target.dataset?.k; if(k&&sheet){sheet[k]=e.target.value.trim();
+    if(e.target.id==="sOther")document.querySelectorAll("[data-pick]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.name===sheet[k]));}
+  if(e.target.id==="monthPick"&&e.target.value)changeMonth(e.target.value);
+});
+document.addEventListener("change",e=>{const k=e.target.dataset?.k;if(k&&sheet)sheet[k]=e.target.value});
+
+/* ============================================================
+ * 入退室
+ * ============================================================ */
+let exData=null, exYm="", exDate=ymd(new Date()), exSheet=null, exBusy=false, exLink="", exLoading="";
+function excall(fn,...args){return rpc(fn,args)}
+async function exLoad(ym){
+  if(exLoading===ym)return; exLoading=ym;
+  try{const d=await excall("exGetData",ym);exData=d;exYm=ym;exRender()}
+  catch(e){if(errCode(e))return;setStatus("入退室の記録を読み込めませんでした。ページを開き直してください。","warn")}
+  finally{if(exLoading===ym)exLoading=""}
+}
+function exRender(){if(tab==="entry")renderEntry();else if(tab==="month"&&viewCab==="__ex")renderMonth()}
+function exRefresh(){if(tab==="entry")exLoad(exDate.slice(0,7));else if(tab==="month"&&viewCab==="__ex")exLoad(viewMonth)}
+function exRec(date){return (exData&&exData.records.find(r=>r.date===date))||null}
+function exAddDays(date,n){const [y,m,d]=date.split("-").map(Number);return ymd(new Date(y,m-1,d+n))}
+function exSetDate(d){if(!d)return;exDate=d;renderEntry()}
+
+function renderEntry(){
+  const el=$("view-entry");
+  const [y,m,d]=exDate.split("-").map(Number), wd=new Date(y,m-1,d).getDay(), isToday=exDate===todayStr;
+  let h=`<div class="toolbar" style="margin-bottom:10px"><button class="btn ghost" data-exday="-1">‹ 前日</button>
+    <input type="date" id="exDatePick" value="${exDate}" aria-label="日付">
+    <button class="btn ghost" data-exday="1">翌日 ›</button>${isToday?"":`<button class="btn" data-exday="0">今日に戻る</button>`}</div>
+    <div class="exdate">${m}月${d}日（${WD[wd]}）${isToday?`<span class="pill closed">今日</span>`:""}</div>`;
+  if(!exData||exYm!==exDate.slice(0,7)){exLoad(exDate.slice(0,7));el.innerHTML=h+`<p class="empty">記録を読み込んでいます…</p>`;return}
+  const left=exData.records.filter(r=>r.inAt&&!r.outAt&&r.date<todayStr).map(r=>r.date).sort();
+  if(left.length)h+=`<div class="notice warn" style="margin-bottom:12px">最終退室の記録がない日があります：${left.map(x=>`${+x.slice(5,7)}/${+x.slice(8)}`).join("、")}　→ 月別一覧の「入退室」で確認してください</div>`;
+  if(ready&&!staff.length)h+=`<div class="notice info" style="margin-bottom:12px">名前が登録されていません。管理者に連絡してください。</div>`;
+  const r=exRec(exDate)||{}, checks=exData.checks||[];
+  const miss=checks.filter(c=>!(r.checks||[]).includes(c));
+  const outSt=!r.outAt?"idle":(miss.length?"open":"closed");
+  h+=`<div class="grid">
+    <article class="cab"><div class="cab-head"><div class="cab-name">入室<small>その日最初に入った人</small></div><span class="pill ${r.inAt?"closed":"idle"}">${r.inAt?"入室済":"未入室"}</span></div>
+      <dl class="rows"><dt>入室者</dt><dd>${esc(r.inBy)||"—"}</dd><dd class="t">${esc(r.inAt)}</dd></dl>
+      ${r.inAt?`<button class="big done" data-exopen="in">記録を直す</button>`:`<button class="big open" data-exopen="in">入室する</button>`}</article>
+    <article class="cab"><div class="cab-head"><div class="cab-name">最終退室<small>最後に出る人が点検して記録</small></div><span class="pill ${outSt}">${{idle:"未退室",open:"点検もれ",closed:"退室済"}[outSt]}</span></div>
+      <dl class="rows"><dt>退室者</dt><dd>${esc(r.outBy)||"—"}</dd><dd class="t">${esc(r.outAt)}</dd>
+      <dt>点検</dt><dd style="grid-column:span 2">${!r.outAt?"—":miss.length?`<span class="miss">未チェック：${miss.map(esc).join("、")}</span>`:"すべて確認済み"}</dd></dl>
+      ${r.outAt?`<button class="big done" data-exopen="out">記録を直す</button>`:`<button class="big close" data-exopen="out">最終退室する</button>`}</article>
+  </div>`;
+  el.innerHTML=h;
+}
+
+function exOpen(kind){
+  const r=exRec(exDate)||{}, def=lastName&&staff.includes(lastName)?lastName:"";
+  exSheet=kind==="in"
+    ?{kind,has:!!r.inAt,by:r.inBy||def,at:r.inAt||hm(new Date()),checks:[]}
+    :{kind,has:!!r.outAt,by:r.outBy||def,at:r.outAt||hm(new Date()),checks:r.outAt?[...(r.checks||[])]:[]};
+  exDraw();
+}
+function exDraw(){
+  const s=exSheet; if(!s){$("sheetRoot").innerHTML="";return}
+  const [,mm,dd]=exDate.split("-"), label=s.kind==="in"?"入室":"最終退室";
+  const title=(s.has?`${label}の記録を直す`:`${label}を記録`)+(exDate!==todayStr?`（${+mm}月${+dd}日）`:"");
+  const list=[...staff].sort((a,b)=>(b===lastName)-(a===lastName));
+  const names=list.length?`<div class="names">${list.map(n=>`<button type="button" data-expick="${esc(n)}" aria-pressed="${s.by===n}">${esc(n)}</button>`).join("")}</div>`
+    :`<p class="help">名前が登録されていません。下の欄に名前を入力してください。</p>`;
+  let body=`<div class="field"><label>だれが${label}しましたか</label>${names}</div>
+    <div class="pair"><div class="field"><label for="exOther">名前（一覧にない場合）</label><input id="exOther" data-exk="by" value="${staff.includes(s.by)?"":esc(s.by)}" maxlength="20"></div>
+    <div class="field"><label for="exTime">時間</label><input id="exTime" type="time" data-exk="at" value="${esc(s.at)}"></div></div>`;
+  if(s.kind==="out"){
+    const cks=exData.checks||[];
+    body+=`<div class="field"><label>最終退室時の点検（確認したらチェック）</label><div class="checks">${cks.map(c=>`<label class="${s.checks.includes(c)?"on":""}"><input type="checkbox" data-exc="${esc(c)}"${s.checks.includes(c)?" checked":""}>${esc(c)}</label>`).join("")}</div>
+      ${cks.length?`<button type="button" class="btn ghost" data-exs="all" style="align-self:flex-start">すべてチェック</button>`:""}</div>`;
+    if(s.warn)body+=`<div class="notice warn" id="exWarn">チェックしていない項目があります：${esc(s.warn)}<br>このまま記録する場合は、もう一度「${label}を記録」を押してください。</div>`;
+  }
+  if(s.confirmDel)body+=`<div class="notice warn">この${label}の記録を消します。よろしいですか？ <button class="btn danger" data-exs="delyes">消す</button> <button class="btn ghost" data-exs="delno">やめる</button></div>`;
+  $("sheetRoot").innerHTML=`<div class="scrim" data-exs="cancel"><div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+    <h2>${esc(title)}</h2>${body}<p id="exErr" class="miss" hidden></p>
+    <div class="actions">${s.has?`<button class="btn danger" data-exs="del" style="margin-right:auto">記録を消す</button>`:""}
+    <button class="btn ghost" data-exs="cancel">やめる</button><button class="btn primary" data-exs="save">${exBusy?"保存中…":label+"を記録"}</button></div></div></div>`;
+}
+function exErr(msg){const er=$("exErr");if(er){er.textContent=msg;er.hidden=false}}
+async function exSave(){
+  if(exBusy)return; const s=exSheet;
+  if(!s.by)return exErr("名前を選んでください。");
+  if(!s.at)return exErr("時間を入れてください。");
+  const cks=exData.checks||[];
+  if(s.kind==="out"){const miss=cks.filter(c=>!s.checks.includes(c));if(miss.length&&!s.warn){s.warn=miss.join("、");exDraw();return}}
+  exBusy=true;exDraw();
+  try{
+    exData=await excall("exSaveEntry",exDate,s.kind,s.by,s.at,s.kind==="out"?cks.filter(c=>s.checks.includes(c)):[]);exYm=exDate.slice(0,7);
+    if(staff.includes(s.by)){lastName=s.by;try{localStorage.setItem("lastName",s.by)}catch(e){}}
+    exBusy=false;exSheet=null;exDraw();renderEntry();toast(s.kind==="in"?"入室を記録しました":"最終退室を記録しました");
+  }catch(e){exBusy=false;exDraw();exErr("保存できませんでした。通信状態を確認して、もう一度押してください。")}
+}
+async function exDelete(){
+  const s=exSheet;
+  try{exData=await excall("exClearEntry",exDate,s.kind);exYm=exDate.slice(0,7);exSheet=null;exDraw();renderEntry();toast("記録を消しました")}
+  catch(e){toast("消せませんでした")}
+}
+
+function exMonthHtml(y,m,days){
+  if(!exData||exYm!==viewMonth){exLoad(viewMonth);return `<p class="empty">記録を読み込んでいます…</p>`}
+  const st=exData.settings||{}, cks=exData.checks||[];
+  let rows="";
+  for(let d=1;d<=days;d++){
+    const date=`${viewMonth}-${pad(d)}`, wd=new Date(y,m-1,d).getDay(), r=exRec(date);
+    const miss=r&&r.inAt&&!r.outAt&&date<todayStr;
+    rows+=`<tr class="row${wd===0||wd===6?" we":""}${date===todayStr?" today":""}" data-date="${date}" tabindex="0">
+      <td class="d">${d}</td><td class="d">${WD[wd]}</td><td class="t">${esc(r?.inAt)}</td><td>${esc(r?.inBy)}</td>
+      <td class="t">${esc(r?.outAt)}</td><td>${esc(r?.outBy)}${miss?`<span class="miss">未記録</span>`:""}</td>
+      ${cks.map(c=>`<td>${r&&r.outAt&&(r.checks||[]).includes(c)?"✓":""}</td>`).join("")}</tr>`;
+  }
+  return `<div class="toolbar"><button class="btn" data-exprint="1">印刷</button><button class="btn ghost" data-exmksheet="1">印刷用シートを作成</button>
+      ${exLink?`<span class="help">作成しました：<a href="${esc(exLink)}" target="_blank">スプレッドシートで開く</a></span>`:""}</div>
+    <div class="ph"><div>${esc(st["会社名"]||"")}</div><div class="ph-t">${esc(st["事業所名"]||"")}　入退室管理簿　【　${y}　年　${m}　月】</div><div class="ph-m">入退室管理責任者　${esc(st["入退室管理責任者"]||"")}</div></div>
+    <div class="tablebox"><table class="ex"><caption class="noprint">入退室　${y}年${m}月</caption>
+      <thead><tr><th rowspan="2">日</th><th rowspan="2">曜</th><th rowspan="2">入室時刻</th><th rowspan="2">名前</th><th rowspan="2">退室時刻</th><th rowspan="2">名前</th>${cks.length?`<th colspan="${cks.length}">最終退室時の点検項目</th>`:""}</tr>
+      <tr>${cks.map(c=>`<th class="ckh">${esc(c)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="help">行をタップすると、その日の入退室画面を開きます。記録はスプレッドシートの「入退室記録」シートにも残ります。</p>`;
+}
+
+/* 入退室のボタン操作（処理したら true） */
+function exClick(b,e){
+  const ds=b.dataset;
+  if(ds.exday!==undefined){exSetDate(ds.exday==="0"?todayStr:exAddDays(exDate,+ds.exday));return true}
+  if(ds.exopen){exOpen(ds.exopen);return true}
+  if(ds.exprint){window.print();return true}
+  if(ds.exmksheet){b.disabled=true;excall("exMakePrintSheet",viewMonth).then(u=>{exLink=u;renderMonth()}).catch(()=>{b.disabled=false;toast("作成できませんでした")});return true}
+  if(ds.expick!==undefined&&exSheet){exSheet.by=ds.expick;document.querySelectorAll("[data-expick]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.expick===exSheet.by));const o=$("exOther");if(o)o.value="";return true}
+  const a=ds.exs; if(!a||!exSheet)return false;
+  if(a==="cancel"){if(e.target===b&&!exBusy){exSheet=null;exDraw()}return true}
+  if(a==="save"){exSave();return true}
+  if(a==="all"){exSheet.checks=[...(exData.checks||[])];exSheet.warn=null;exDraw();return true}
+  if(a==="del"){exSheet.confirmDel=true;exDraw();return true}
+  if(a==="delno"){exSheet.confirmDel=false;exDraw();return true}
+  if(a==="delyes"){exDelete();return true}
+  return true;
+}
+document.addEventListener("input",e=>{
+  const k=e.target.dataset?.exk; if(!k||!exSheet)return;
+  exSheet[k]=e.target.value.trim();
+  if(k==="by")document.querySelectorAll("[data-expick]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.expick===exSheet.by));
+});
+document.addEventListener("change",e=>{
+  if(e.target.id==="exDatePick"){exSetDate(e.target.value);return}
+  const k=e.target.dataset?.exk; if(k&&exSheet){exSheet[k]=e.target.value.trim();return}
+  const c=e.target.dataset?.exc; if(c===undefined||!exSheet)return;
+  exSheet.checks=exSheet.checks.filter(x=>x!==c); if(e.target.checked)exSheet.checks.push(c);
+  e.target.parentNode.classList.toggle("on",e.target.checked);
+  if(exSheet.warn){exSheet.warn=null;const w=$("exWarn");if(w)w.remove()}
+});
+
+if(IN_PWA)$("backMenu").hidden=false;
+render(); if(KEY){load(); exLoad(exDate.slice(0,7));}else showGate("");
+setInterval(()=>{if(KEY&&!$("gate")&&!sheet&&!exSheet&&!document.hidden){load();exRefresh()}},60000);
+document.addEventListener("visibilitychange",()=>{if(KEY&&!$("gate")&&!document.hidden&&!sheet&&!exSheet){load();exRefresh()}});
+</script>
+</body></html>

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>郵送物管理｜N-SMART 沖縄事務所</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="N-SMART沖縄">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f5f2fb">
+<script src="config.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=BIZ+UDGothic:wght@700&display=swap">
+<style>
+:root{
+  --bg:#fdf1f4; --surface:#ffffff; --ink:#1d2a3a; --muted:#5d6b7c; --line:#f1d3db;
+  --accent:#c2456a; --accent-ink:#ffffff; --accent-soft:#fbe2ea; --ok:#2f7a4f; --warn:#a2620f;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#1d1417; --surface:#2a1d22; --ink:#e6ebf1; --muted:#9aa7b6; --line:#46303a;
+  --accent:#f08aa8; --accent-ink:#24121a; --accent-soft:#3c2430; --ok:#6cc292; --warn:#e0a650; color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Noto Sans JP","Yu Gothic UI",sans-serif;font-size:15px;line-height:1.6;padding:calc(12px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right)) calc(48px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left))}
+.wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+/* 見出し（3機能共通の形） */
+.hd{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.hd h1{font-size:1.35rem;line-height:1.35;margin:0;font-weight:700;text-wrap:balance;font-family:"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif}
+.hd .back{display:block;font-size:.85rem;font-weight:700;color:var(--accent);text-decoration:none;margin-bottom:2px}
+.hd .today{font-family:"BIZ UDGothic","Hiragino Sans",Meiryo,monospace;color:var(--muted);font-size:.95rem}
+.stamp{display:inline-grid;place-items:center;width:32px;height:32px;border:2px solid var(--accent);color:var(--accent);border-radius:50%;font-size:13px;transform:rotate(-8deg)}
+.num{font-variant-numeric:tabular-nums}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:14px}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:600}
+input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+select{font-size:16px}
+input:focus-visible,select:focus-visible,button:focus-visible,.drop:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{font:inherit;font-weight:700;border:0;border-radius:8px;padding:13px 16px;cursor:pointer;background:var(--accent);color:var(--accent-ink)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:500}
+.btn.small{padding:7px 10px;font-size:13px}
+.btn.link{background:none;border:0;color:var(--accent);padding:0;font-weight:600;font-size:13px}
+.drop{border:2px dashed var(--line);border-radius:10px;min-height:130px;display:grid;place-items:center;text-align:center;cursor:pointer;padding:12px;color:var(--muted);overflow:hidden}
+.drop.has{border-style:solid;padding:0;min-height:0}
+.drop img{max-height:240px;width:100%;object-fit:contain;display:block;background:var(--bg)}
+.drop strong{display:block;color:var(--ink);font-size:16px}
+.result{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.result div{background:var(--bg);padding:10px 12px;min-width:0}
+.result .lab{font-size:12px;color:var(--muted)}
+.result .val{font-size:20px;font-weight:700}
+.result .val.none{color:var(--muted);font-weight:400;font-size:15px}
+.status{font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.edit{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.lines{display:flex;flex-direction:column;gap:10px}
+.line{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,1fr) minmax(0,1.2fr) auto;gap:8px;align-items:end;padding:10px;border:1px solid var(--line);border-radius:8px}
+.line .rm{height:44px}
+.split-sum{font-size:13px;padding:8px 12px;border-radius:8px;background:var(--bg)}
+.bad{color:var(--warn);font-weight:700} .good{color:var(--ok);font-weight:700}
+.msg{font-size:14px;padding:10px 12px;border-radius:8px;background:var(--accent-soft)}
+.msg.ok{background:transparent;border:1px solid var(--ok);color:var(--ok)}
+.recent{list-style:none;margin:0;padding:0}
+.recent li{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
+.recent li:last-child{border-bottom:0}
+.recent .who{font-size:12px;color:var(--muted)}
+.empty{color:var(--muted);text-align:center;padding:16px}
+.foot{font-size:12px;color:var(--muted);text-align:center}
+.foot a{color:var(--accent)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.dt{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:6px}
+.result .val.small{font-size:16px}
+[hidden]{display:none!important}
+@media (max-width:520px){.line{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.line .lc{grid-column:1/-1}.line .rm{grid-column:1/-1;height:auto}.edit{grid-template-columns:1fr 1fr}.edit .ed-date{grid-column:1/-1}.result .val{font-size:17px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd"><h1><a id="backMenu" class="back" href="index.html" hidden>‹ メニュー</a>郵送物管理</h1><span class="today" id="todayLabel"></span></div>
+
+  <form class="panel" id="form" novalidate>
+    <label>登録者<select id="fWho"><option value="">読み込み中…</option></select></label>
+
+    <input type="file" id="photo" accept="image/*" capture="environment" hidden>
+    <input type="file" id="photoLib" accept="image/*" hidden>
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="カメラで交付証を撮影">
+      <div><strong>交付証を撮影</strong>タップするとカメラが起動します</div>
+    </div>
+    <button type="button" class="btn ghost small" id="libBtn" style="align-self:flex-start">保存済みの写真から選ぶ</button>
+
+    <!-- 読み取り結果 -->
+    <div class="result" aria-live="polite">
+      <div><div class="lab">到着日</div><div class="val num" id="vDate">―</div></div>
+      <div><div class="lab">通数</div><div class="val num none" id="vCount">写真から</div></div>
+      <div><div class="lab">金額</div><div class="val num none" id="vAmount">写真から</div></div>
+    </div>
+    <div class="status"><span id="aiStatus">交付証を撮ると、通数と金額を自動で読み取ります</span><button type="button" class="btn link" id="editBtn">手で直す</button></div>
+    <details id="rawBox" hidden style="font-size:12px;color:var(--muted)"><summary>写真から読み取った文字を見る</summary><pre id="rawText" style="white-space:pre-wrap;margin:6px 0 0;font-size:12px"></pre></details>
+    <div class="edit" id="editBox" hidden>
+      <label class="ed-date">到着日<input type="date" id="fDate"></label>
+      <label>通数<input type="number" id="fCount" inputmode="numeric" min="0" step="1"></label>
+      <label>金額（円）<input type="number" id="fAmount" inputmode="numeric" min="0" step="1"></label>
+    </div>
+
+    <!-- 顧客（1社） -->
+    <div id="single">
+      <label>顧客<select id="fCust"></select></label>
+    </div>
+    <button type="button" class="btn ghost small" id="splitBtn" style="align-self:flex-start">この交付証を複数の顧客に分ける</button>
+
+    <!-- 顧客（複数） -->
+    <div id="multi" class="lines" hidden>
+      <div id="lines" class="lines"></div>
+      <div class="row">
+        <button type="button" class="btn ghost small" id="addLine">＋ 顧客を追加</button>
+        <button type="button" class="btn ghost small" id="unsplitBtn">1社に戻す</button>
+      </div>
+      <div class="split-sum num" id="splitSum"></div>
+    </div>
+
+    <label>メモ（任意）<input type="text" id="fMemo" placeholder="アンケート返信、申込書など"></label>
+    <div id="msg" class="msg" hidden></div>
+    <button class="btn" id="saveBtn" type="submit" disabled>読み込み中…</button>
+  </form>
+
+  <div class="panel">
+    <div style="font-weight:700">最近の登録</div>
+    <ul class="recent" id="recent"><li class="empty">読み込み中…</li></ul>
+  </div>
+  <p class="foot">顧客・登録者の追加や、登録内容の修正はスプレッドシートで行います。<a id="sheetLink" href="#" target="_blank">スプレッドシートを開く</a></p>
+</div>
+
+<script>
+const APP_MOD="yubin";
+/* ---- 通信と合言葉（N-SMART 沖縄事務所アプリ共通） ---- */
+const IN_GAS=!!(window.google&&google.script&&google.script.run);
+const API_URL=((window.APP_CONFIG||{}).urls||{})[APP_MOD]||"";
+let KEY="";try{KEY=localStorage.getItem("passKey")||""}catch(e){}
+function errCode(e){const m=String((e&&e.message)||e||"");const k=m.match(/(BADKEY|NOKEY|BUSY):/);return k?k[1]:""}
+function errText(e){return String((e&&e.message)||e||"").replace(/^.*?(BADKEY|NOKEY|BUSY):/,"")}
+function rawRpc(fn,args,key){
+  if(IN_GAS)return new Promise((ok,ng)=>google.script.run.withSuccessHandler(ok).withFailureHandler(ng).rpc(fn,args,key));
+  if(!API_URL){
+    if(typeof MOCK!=="undefined"&&MOCK[fn])return new Promise((ok,ng)=>{try{ok(MOCK[fn](...args))}catch(e){ng(e)}});
+    if(fn==="ping"&&typeof MOCK!=="undefined")return Promise.resolve(true);
+    return Promise.reject(new Error("設定ファイル（config.js）にURLが入っていません"));
+  }
+  return fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({fn,args,key})})
+    .then(r=>r.json()).then(j=>{if(!j.ok)throw new Error(j.error);return j.data});
+}
+function rpc(fn,args){return rawRpc(fn,args||[],KEY).catch(e=>{const c=errCode(e);if(c==="BADKEY"||c==="NOKEY")showGate(c==="NOKEY"?errText(e):"合言葉が変わりました。新しい合言葉を入力してください。");throw e})}
+function gateEsc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function showGate(msg){
+  if(document.getElementById("gate"))return;
+  if(!document.getElementById("gateCss")){const st=document.createElement("style");st.id="gateCss";st.textContent=`
+#gate{position:fixed;inset:0;z-index:100;background:#f5f2fb;color:#221d2e;display:flex;align-items:center;justify-content:center;
+ padding:max(24px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(24px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+ font-family:"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",Meiryo,system-ui,sans-serif}
+#gate form{width:100%;max-width:380px;display:flex;flex-direction:column;gap:14px;text-align:center}
+#gate h2{margin:0;font-size:1.2rem}#gate p{margin:0;color:#5d6a78;font-size:.92rem;line-height:1.6}
+#gate .gi svg,#gate .gi img{width:88px;height:88px;border-radius:20px;display:block;margin:0 auto}
+#gate input{font:inherit;font-size:1.1rem;padding:14px;border-radius:10px;border:1px solid #ddd5ee;background:#fff;color:#1d2733;text-align:center}
+#gate button{font:inherit;font-weight:700;font-size:1.1rem;padding:14px;border-radius:10px;border:0;background:#6a4fa3;color:#fff;cursor:pointer}
+#gate .ge{color:#a35a00;font-weight:700}
+@media (prefers-color-scheme:dark){#gate{background:#17141f;color:#ece8f4}#gate p{color:#9aa7b4}#gate input{background:#211c2c;border-color:#3a3249;color:#e8edf2}#gate button{background:#b49be6;color:#1a1424}#gate .ge{color:#f0a94a}}`;document.head.appendChild(st)}
+  const d=document.createElement("div");d.id="gate";
+  d.innerHTML=`<form id="gateForm" autocomplete="off">
+    <div class="gi" aria-hidden="true">${ICON_SVG}</div>
+    <h2>N-SMART 沖縄事務所</h2>
+    <p>はじめに、管理者から伝えられた合言葉を入力してください。次からは入力しなくても開けます。</p>
+    <input id="gateKey" type="password" autocapitalize="off" spellcheck="false" placeholder="合言葉" aria-label="合言葉">
+    <p id="gateErr" class="ge"${msg?"":" hidden"}>${gateEsc(msg||"")}</p>
+    <button id="gateBtn">はじめる</button></form>`;
+  document.body.appendChild(d);
+  d.querySelector("form").addEventListener("submit",async e=>{
+    e.preventDefault();
+    const v=d.querySelector("#gateKey").value.trim(),err=d.querySelector("#gateErr"),btn=d.querySelector("#gateBtn");
+    if(!v){err.textContent="合言葉を入力してください。";err.hidden=false;return}
+    btn.disabled=true;btn.textContent="確認しています…";err.hidden=true;
+    try{await rawRpc("ping",[],v);try{localStorage.setItem("passKey",v)}catch(x){}KEY=v;location.reload()}
+    catch(x){btn.disabled=false;btn.textContent="はじめる";const c=errCode(x);
+      err.textContent=c==="BADKEY"?"合言葉が違います。もう一度確かめてください。":c?errText(x):"つながりませんでした。電波のよい所で、もう一度押してください。";err.hidden=false}
+  });
+  setTimeout(()=>{const i=document.getElementById("gateKey");if(i)i.focus()},50);
+}
+const ICON_SVG=`<img alt="" src="data:image/jpeg;base64,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">`;
+/* PWAから開いたときだけ「メニューに戻る」を出す */
+const IN_PWA=!IN_GAS&&!!API_URL;
+
+/* 以前の google.script.run と同じ書き方で、合言葉つきの通信を使う */
+const RUN={get run(){let ok=function(){},ng=function(){};const o=new Proxy({},{get:function(_,p){
+  if(p==="withSuccessHandler")return function(f){ok=f;return o};
+  if(p==="withFailureHandler")return function(f){ng=f;return o};
+  return function(){return rpc(p,Array.prototype.slice.call(arguments)).then(ok,function(e){if(!errCode(e))ng(e)})}}});return o}};
+function startApp(){
+  var $ = function(id){ return document.getElementById(id); };
+  var yen = function(n){ return '¥' + (Number(n)||0).toLocaleString('ja-JP'); };
+  var esc = function(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); };
+  var customers = [], photoData = null, unit = null, forceMismatch = false, seq = 0, reading = false, dateRead = false, today = '';
+
+  function showMsg(t, ok){ var m=$('msg'); m.textContent=t; m.className='msg'+(ok?' ok':''); m.hidden=!t; }
+  function store(k, v){ try { if (v == null) return localStorage.getItem(k); localStorage.setItem(k, v); } catch(e) { return null; } }
+
+  // ---- 初期読み込み
+  RUN.run.withSuccessHandler(function(r){
+    customers = r.customers; today = r.today; $('fDate').value = r.today; $('sheetLink').href = r.sheetUrl;
+    $('fWho').innerHTML = '<option value="">'+(r.staff.length?'選んでください':'スプレッドシートの「登録者」タブに名前を入れてください')+'</option>' +
+      r.staff.map(function(n){ return '<option value="'+esc(n)+'">'+esc(n)+'</option>'; }).join('');
+    var last = store('uketori_who'); if (last && r.staff.indexOf(last) >= 0) $('fWho').value = last;
+    $('fCust').innerHTML = custOptions();
+    renderResult(); renderRecent(r.recent);
+    $('saveBtn').disabled = false; $('saveBtn').textContent = '登録する';
+    if (!customers.length) showMsg('顧客がまだありません。スプレッドシートの「顧客」タブに顧客名を入れてから、この画面を開き直してください');
+  }).withFailureHandler(function(e){ showMsg('読み込めませんでした：' + e.message); }).getInit();
+  $('fWho').onchange = function(){ store('uketori_who', $('fWho').value); };
+
+  // ---- 写真
+  var drop = $('drop');
+  drop.onclick = function(){ $('photo').click(); };
+  drop.onkeydown = function(e){ if (e.key==='Enter'||e.key===' '){ e.preventDefault(); $('photo').click(); } };
+  $('libBtn').onclick = function(){ $('photoLib').click(); };
+  $('photo').onchange = onPick; $('photoLib').onchange = onPick;
+  function onPick(e){
+    var f = e.target.files && e.target.files[0]; if (!f) return;
+    var img = new Image(), url = URL.createObjectURL(f);
+    img.onload = function(){
+      var max=1600, s=Math.min(1, max/Math.max(img.width,img.height));
+      var c=document.createElement('canvas'); c.width=Math.round(img.width*s); c.height=Math.round(img.height*s);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      photoData = c.toDataURL('image/jpeg', 0.85);
+      URL.revokeObjectURL(url);
+      drop.classList.add('has'); drop.innerHTML = '<img alt="選択した交付証" src="'+photoData+'">';
+      readReceipt();
+    };
+    img.src = url;
+  }
+
+  function readReceipt(){
+    reading = true; $('aiStatus').textContent = '読み取り中…（10秒ほどかかります）'; $('saveBtn').disabled = true;
+    RUN.run.withSuccessHandler(function(r){
+      reading = false; $('saveBtn').disabled = false;
+      dateRead = !!r.date;
+      if (r.date) $('fDate').value = r.date;
+      $('fCount').value = r.count != null ? r.count : '';
+      $('fAmount').value = r.amount != null ? r.amount : '';
+      unit = r.unit;
+      var ok = r.count != null && r.amount != null && !!r.date;
+      $('aiStatus').textContent = ok ? '読み取りました。数字が交付証と合っているか確認してください' : '一部読み取れませんでした。「手で直す」から入力してください';
+      if (!ok) $('editBox').hidden = false;
+      $('rawText').textContent = r.raw || '（文字を読み取れませんでした）';
+      $('rawBox').hidden = ok;
+      renderResult(); recalc();
+    }).withFailureHandler(function(err){
+      reading = false; $('saveBtn').disabled = false;
+      $('aiStatus').textContent = '読み取れませんでした（' + (err && err.message ? err.message : '原因不明') + '）。到着日・通数・金額を入力してください';
+      $('editBox').hidden = false; renderResult();
+    }).readReceipt(photoData);
+  }
+
+  function renderResult(){
+    var d = $('fDate').value, c = $('fCount').value, a = $('fAmount').value;
+    var show = photoData && !reading && d && (dateRead || $('fDate').dataset.edited);
+    $('vDate').textContent = show ? d.replace(/-/g,'/').replace(/^\d{4}\//,'').replace(/^0/,'').replace(/\/0/,'/') : (photoData ? '―' : '写真から');
+    $('vDate').classList.toggle('none', !show);
+    $('vCount').textContent = c !== '' ? c + '通' : (photoData ? '―' : '写真から');
+    $('vAmount').textContent = a !== '' ? yen(a) : (photoData ? '―' : '写真から');
+    $('vCount').classList.toggle('none', c === ''); $('vAmount').classList.toggle('none', a === '');
+  }
+  $('editBtn').onclick = function(){ $('editBox').hidden = !$('editBox').hidden; if (!$('editBox').hidden) $('fCount').focus(); };
+  ['fDate','fCount','fAmount'].forEach(function(id){ $(id).addEventListener('input', function(){
+    if (id === 'fDate') $('fDate').dataset.edited = '1';
+    renderResult(); recalc(); resetMismatch(); }); });
+
+  // ---- 複数の顧客
+  function custOptions(){
+    return '<option value="">'+(customers.length?'顧客を選択':'顧客がまだありません')+'</option>' +
+      customers.map(function(c){ return '<option value="'+esc(c)+'">'+esc(c)+'</option>'; }).join('');
+  }
+  function lineEls(){ return Array.prototype.slice.call($('lines').querySelectorAll('.line')); }
+  function addLine(name){
+    var k = ++seq, el = document.createElement('div'); el.className = 'line';
+    el.innerHTML = '<label class="lc">顧客<select class="lc-cust" id="c'+k+'">'+custOptions()+'</select></label>'+
+      '<label>通数<input class="lc-count" id="n'+k+'" type="number" inputmode="numeric" min="0" step="1"></label>'+
+      '<label>金額<input class="lc-amount" id="a'+k+'" type="number" inputmode="numeric" min="0" step="1" placeholder="自動"></label>'+
+      '<button type="button" class="btn ghost small rm">削除</button>';
+    if (name) el.querySelector('.lc-cust').value = name;
+    $('lines').appendChild(el); return el;
+  }
+  $('splitBtn').onclick = function(){
+    var first = $('fCust').value;
+    $('lines').innerHTML = ''; addLine(first); addLine();
+    $('single').hidden = true; $('splitBtn').hidden = true; $('multi').hidden = false;
+    recalc(); lineEls()[first ? 1 : 0].querySelector('.lc-cust').focus();
+  };
+  $('unsplitBtn').onclick = function(){
+    var first = lineEls()[0]; if (first) $('fCust').value = first.querySelector('.lc-cust').value;
+    $('multi').hidden = true; $('single').hidden = false; $('splitBtn').hidden = false; resetMismatch();
+  };
+  $('addLine').onclick = function(){ addLine().querySelector('.lc-cust').focus(); recalc(); };
+  $('lines').addEventListener('click', function(e){
+    var b = e.target.closest('.rm'); if (!b) return;
+    b.closest('.line').remove();
+    if (lineEls().length < 2) $('unsplitBtn').onclick(); else recalc();
+  });
+  $('lines').addEventListener('input', function(e){
+    if (e.target.classList.contains('lc-amount')) e.target.dataset.manual = e.target.value === '' ? '' : '1';
+    resetMismatch(); recalc();
+  });
+
+  // 通数に合わせて金額を自動で割り振る（手で入れた金額はそのまま）
+  function recalc(){
+    if ($('multi').hidden) return;
+    var ls = lineEls(), total = $('fAmount').value === '' ? null : Number($('fAmount').value);
+    var totalCount = $('fCount').value === '' ? null : Number($('fCount').value);
+    var per = unit || (total != null && totalCount ? total / totalCount : null);
+    var autoLines = ls.filter(function(el){ return !el.querySelector('.lc-amount').dataset.manual; });
+    var manualSum = ls.reduce(function(a, el){ var i = el.querySelector('.lc-amount'); return a + (i.dataset.manual ? Number(i.value)||0 : 0); }, 0);
+    var autoSum = 0;
+    autoLines.forEach(function(el, i){
+      var cnt = el.querySelector('.lc-count').value, inp = el.querySelector('.lc-amount');
+      if (cnt === '' || per == null) { inp.value = ''; return; }
+      var v = Math.round(Number(cnt) * per);
+      // 最後の自動行で端数を調整し、合計を交付証に合わせる
+      var allFilled = autoLines.every(function(x){ return x.querySelector('.lc-count').value !== ''; });
+      if (i === autoLines.length - 1 && allFilled && total != null && sumCounts(ls) === totalCount) v = total - manualSum - autoSum;
+      autoSum += v; inp.value = v;
+    });
+    var cnt = sumCounts(ls), amt = ls.reduce(function(a, el){ return a + (Number(el.querySelector('.lc-amount').value)||0); }, 0);
+    var parts = ['内訳 ' + cnt + '通 ' + yen(amt)];
+    if (totalCount != null) parts.push(cnt === totalCount ? '<span class="good">通数一致</span>' : '<span class="bad">交付証は' + totalCount + '通（' + (totalCount - cnt > 0 ? 'あと' + (totalCount - cnt) : (cnt - totalCount) + '通多い') + '）</span>');
+    if (total != null) parts.push(amt === total ? '<span class="good">金額一致</span>' : '<span class="bad">交付証は' + yen(total) + '</span>');
+    $('splitSum').innerHTML = parts.join('　');
+  }
+  function sumCounts(ls){ return ls.reduce(function(a, el){ return a + (Number(el.querySelector('.lc-count').value)||0); }, 0); }
+  function resetMismatch(){ forceMismatch=false; $('saveBtn').textContent='登録する'; }
+
+  // ---- 登録
+  $('form').onsubmit = function(e){
+    e.preventDefault();
+    if (reading) return;
+    var who = $('fWho').value, date = $('fDate').value, count = $('fCount').value, amount = $('fAmount').value;
+    if (!who) return showMsg('登録者を選んでください');
+    if (!date) { $('editBox').hidden = false; return showMsg('到着日を入力してください'); }
+    if (amount === '') { $('editBox').hidden = false; return showMsg(photoData ? '金額を読み取れていません。「手で直す」から入力してください' : '交付証を撮影してください'); }
+    var lines;
+    if ($('multi').hidden) {
+      if (!$('fCust').value) return showMsg('顧客を選んでください');
+      lines = [{ customer: $('fCust').value, count: count, amount: amount }];
+    } else {
+      lines = lineEls().map(function(el){ return { customer: el.querySelector('.lc-cust').value, count: el.querySelector('.lc-count').value, amount: el.querySelector('.lc-amount').value }; });
+      for (var i=0;i<lines.length;i++){
+        if (!lines[i].customer) return showMsg((i+1)+'行目：顧客を選んでください');
+        if (lines[i].count === '' && lines[i].amount === '') return showMsg((i+1)+'行目：通数を入力してください');
+        if (lines[i].amount === '') return showMsg((i+1)+'行目：金額を入力してください');
+      }
+      var names = lines.map(function(l){return l.customer;});
+      if (names.some(function(n,i){ return names.indexOf(n)!==i; })) return showMsg('同じ顧客が2行あります。1行にまとめてください');
+      var sum = lines.reduce(function(a,l){ return a + Number(l.amount); }, 0);
+      if (sum !== Number(amount) && !forceMismatch){
+        forceMismatch = true; $('saveBtn').textContent = '差額があるまま登録する';
+        return showMsg('内訳の合計（'+yen(sum)+'）が交付証の金額（'+yen(amount)+'）と合いません。確認してから、もう一度押すと登録します');
+      }
+    }
+    var btn = $('saveBtn'); btn.disabled = true; btn.textContent = '登録中…';
+    RUN.run.withSuccessHandler(function(r){
+      var total = lines.reduce(function(a,l){ return a + Number(l.amount); }, 0);
+      showMsg(lines.length===1 ? '登録しました：'+lines[0].customer+' '+yen(total) : '登録しました：'+lines.length+'顧客に分けて合計 '+yen(total), true);
+      customers = r.customers; renderRecent(r.recent); resetForm();
+      btn.disabled = false; resetMismatch(); window.scrollTo(0,0);
+    }).withFailureHandler(function(err){
+      showMsg('登録できませんでした：'+err.message); btn.disabled = false; resetMismatch();
+    }).saveEntry({ date: date, lines: lines, total: amount, memo: $('fMemo').value.trim(), who: who, photo: photoData });
+  };
+
+  function resetForm(){
+    photoData = null; unit = null; dateRead = false; $('photo').value=''; $('photoLib').value='';
+    $('fDate').value = today; delete $('fDate').dataset.edited;
+    $('fCount').value=''; $('fAmount').value=''; $('fMemo').value='';
+    $('fCust').innerHTML = custOptions(); $('editBox').hidden = true; $('rawBox').hidden = true;
+    $('multi').hidden = true; $('single').hidden = false; $('splitBtn').hidden = false; $('lines').innerHTML = '';
+    drop.classList.remove('has'); drop.innerHTML = '<div><strong>次の交付証を撮影</strong>タップするとカメラが起動します</div>';
+    $('aiStatus').textContent = '交付証を撮ると、通数と金額を自動で読み取ります';
+    renderResult();
+  }
+
+  function renderRecent(list){
+    $('recent').innerHTML = list && list.length ? list.slice(0,15).map(function(r){
+      return '<li><span>'+esc(r.customer)+'<div class="who">'+esc(r.date)+'　'+esc(r.who)+(r.memo?'　'+esc(r.memo):'')+'</div></span><span class="num">'+(r.count!=null?r.count+'通　':'')+'<strong>'+yen(r.amount)+'</strong></span></li>';
+    }).join('') : '<li class="empty">まだ登録がありません</li>';
+  }
+}
+(function(){var n=new Date(),W=["日","月","火","水","木","金","土"],el=document.getElementById("todayLabel");if(el)el.textContent=n.getFullYear()+"年"+(n.getMonth()+1)+"月"+n.getDate()+"日（"+W[n.getDay()]+"）";})();
+if(IN_PWA)document.getElementById("backMenu").hidden=false;
+if(KEY) startApp(); else showGate("");
+</script>
+</body>
+</html>
