@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>郵送物管理｜N-SMART 沖縄事務所</title>
+<title>郵便管理｜N-SMART 沖縄事務所</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -23,13 +23,13 @@
   --bg:#1d1417; --surface:#2a1d22; --ink:#e6ebf1; --muted:#9aa7b6; --line:#46303a;
   --accent:#f08aa8; --accent-ink:#24121a; --accent-soft:#3c2430; --ok:#6cc292; --warn:#e0a650; color-scheme:dark}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Sans","Noto Sans JP","Yu Gothic UI",sans-serif;font-size:15px;line-height:1.6;padding:calc(12px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right)) calc(48px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left))}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;font-size:15px;line-height:1.6;padding:calc(12px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right)) calc(48px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left))}
 .wrap{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
 /* 見出し（3機能共通の形） */
 .hd{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
 .hd h1{font-size:1.35rem;line-height:1.35;margin:0;font-weight:700;text-wrap:balance;font-family:"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif}
 .hd .back{display:block;font-size:.85rem;font-weight:700;color:var(--accent);text-decoration:none;margin-bottom:2px}
-.hd .today{font-family:"BIZ UDGothic","Hiragino Sans",Meiryo,monospace;color:var(--muted);font-size:.95rem}
+.hd .today{font-family:"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--muted);font-size:.95rem}
 .stamp{display:inline-grid;place-items:center;width:32px;height:32px;border:2px solid var(--accent);color:var(--accent);border-radius:50%;font-size:13px;transform:rotate(-8deg)}
 .num{font-variant-numeric:tabular-nums}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:14px}
@@ -76,7 +76,7 @@ input:focus-visible,select:focus-visible,button:focus-visible,.drop:focus-visibl
 </head>
 <body>
 <div class="wrap">
-  <div class="hd"><h1><a id="backMenu" class="back" href="index.html" hidden>‹ メニュー</a>郵送物管理</h1><span class="today" id="todayLabel"></span></div>
+  <div class="hd"><h1><a id="backMenu" class="back" href="index.html" hidden>‹ メニュー</a>郵便管理</h1><span class="today" id="todayLabel"></span></div>
 
   <form class="panel" id="form" novalidate>
     <label>登録者<select id="fWho"><option value="">読み込み中…</option></select></label>
