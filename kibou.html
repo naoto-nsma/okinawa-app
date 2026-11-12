@@ -63,6 +63,14 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 .reqbox small{display:block;color:var(--fg);font-weight:400}
 .reqmsg{background:var(--off-soft);border-radius:10px;padding:10px 12px;font-size:13.5px}.reqmsg b{color:var(--off)}
 .sec{font-size:12px;font-weight:700;color:var(--muted);margin:10px 0 0}
+.want{flex-direction:row;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.want .lbl{font-weight:700;font-size:15px}.want .lbl small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.stp{display:flex;align-items:center;gap:8px;font-weight:700}
+.stp button{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:20px;line-height:1}
+.stp input{width:64px;text-align:center;font:inherit;font-size:22px;font-weight:700;border:0;border-bottom:2px solid var(--line);background:transparent;color:var(--fg);padding:2px;-moz-appearance:textfield;appearance:textfield}
+.stp input::-webkit-outer-spin-button,.stp input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+button.w{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:2px 0;font:inherit;font-size:11px;font-weight:700;color:var(--muted)}
+button.w.su{color:var(--off)}button.w.sa{color:var(--add)}
 .hn{font-size:9px;color:var(--off);line-height:1.1;overflow:hidden;white-space:nowrap;max-width:100%}
 .leg{display:flex;flex-wrap:wrap;gap:6px;font-size:11.5px}.leg .k{width:auto;padding:2px 7px;font-size:11.5px}
 input[type=text],select{font:inherit;font-size:16px;width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
@@ -112,9 +120,13 @@ input[type=text],select{font:inherit;font-size:16px;width:100%;padding:11px 12px
       <div class="band" id="band"></div>
       <div class="status" id="status"></div>
       <div class="reqbox" id="reqbox" hidden></div>
+      <div class="panel want" id="wantBox" hidden>
+        <div class="lbl">出勤日数の希望<small>月合計で、だいたい何日くらい出られますか</small></div>
+        <div class="stp"><button type="button" id="wMinus" aria-label="1日減らす">−</button><input id="want" type="number" inputmode="numeric" min="0" max="31" placeholder="―" aria-label="出勤日数">日くらい<button type="button" id="wPlus" aria-label="1日増やす">＋</button></div>
+      </div>
       <div class="mh"><b id="mTitle"></b><small id="mHint">日付をタップして変更</small></div>
       <div class="cal" id="cal"></div>
-      <div class="leg"><span class="k on">出勤</span><span class="k time">時間を変更</span><span class="k off">休み希望</span><span class="k tw">在宅</span><span class="k add">追加で出勤可</span></div>
+      <div class="leg"><span class="k on" id="legOn">出勤</span><span class="k time">時間を変更</span><span class="k off">休み希望</span><span class="k tw">在宅</span><span class="k add">追加で出勤可</span></div>
       <input type="text" id="memo" placeholder="ひとこと（任意）：通院のため26日は午前のみ など" aria-label="ひとこと">
       <div id="msg" class="msg" hidden></div>
       <button class="btn" id="confirmBtn">確認して送信</button>
@@ -194,11 +206,13 @@ function showMsg(t,ok){const m=$("msg");m.textContent=t||"";m.className="msg"+(o
 function lab(d){return I.period.m+"/"+d+"（"+W[wd(d)]+"）"}
 function fmtDue(s){const p=s.split("-").map(Number);const dt=new Date(p[0],p[1]-1,p[2]);return (p[1])+"月"+p[2]+"日（"+W[dt.getDay()]+"）"}
 
+function isCount(){return !!(I.modes&&I.modes[me]==="count")}
 function reqOf(d){return (I.reqs||[]).find(r=>r.d===d)||null}
 function reqLabel(r){return r.k==="off"?"休みのお願い":"出勤のお願い"}
 function unanswered(){return (I.reqs||[]).filter(r=>!(days[r.d]&&days[r.d].t==="req"))}
 /* いつもの予定から、来月の初期状態をつくる（祝日は外す） */
-function defaults(){const o={};for(let d=1;d<=nDays();d++){const b=baseOf(d);if(b&&!I.holidays[d])o[d]={t:"on",s:b.s,e:b.e}}
+function defaults(){const o={};for(let d=1;d<=nDays();d++){const b=baseOf(d),w=wd(d);
+    if(isCount()){if(w>=1&&w<=5&&!I.holidays[d])o[d]={t:"on"}}else if(b&&!I.holidays[d])o[d]={t:"on",s:b.s,e:b.e}}
   (I.reqs||[]).forEach(r=>{if(r.k==="off")o[r.d]={t:"req",k:"off",a:"ok"};else delete o[r.d]});return o}
 
 function render(){
@@ -215,12 +229,14 @@ function render(){
   $("reqbox").hidden=!(rq.length&&p.open);
   $("reqbox").innerHTML=`管理者からのお願いが${rq.length}件あります（赤い枠の日）${un.length?`　<span style="font-weight:400">未回答 ${un.length}件</span>`:""}<small>${rq.map(r=>esc(lab(r.d)+" "+reqLabel(r))).join("・")}</small>`;
   if(sent&&un.length&&p.open)$("status").innerHTML+=`<br><b style="color:var(--off)">新しいお願いがあります。答えてから送り直してください</b>`;
-  $("mTitle").textContent=p.y+"年"+p.m+"月";$("mHint").hidden=!p.open;
+  $("wantBox").hidden=!isCount();$("legOn").textContent=isCount()?"可＝出勤できる":"出勤";$("want").disabled=!p.open;
+  $("mTitle").textContent=p.y+"年"+p.m+"月";$("mHint").hidden=!p.open;$("mHint").textContent=isCount()?"曜日をタップでまとめて休みに":"日付をタップして変更";
   $("memo").disabled=!p.open;$("confirmBtn").hidden=!p.open;
   renderCal();
 }
 function renderCal(){
-  let h=W.map((w,i)=>`<div class="w ${i==0?"su":i==6?"sa":""}">${w}</div>`).join("");
+  const cm=isCount()&&I.period.open;
+  let h=W.map((w,i)=>cm?`<button type="button" class="w ${i==0?"su":i==6?"sa":""}" data-w="${i}" aria-label="${w}曜日をまとめて休みにする">${w}</button>`:`<div class="w ${i==0?"su":i==6?"sa":""}">${w}</div>`).join("");
   for(let i=0;i<wd(1);i++)h+=`<div class="d blank"></div>`;
   for(let d=1;d<=nDays();d++){const w=wd(d),v=days[d],b=baseOf(d);let k="";
     const rq=reqOf(d);
@@ -228,7 +244,7 @@ function renderCal(){
       if(v.k==="work"){t=ok?(v.s?shortT(v.s,v.e):"出勤"):"出勤NG";c=ok?"on":"off"}else{t=ok?"休み":(v.s?shortT(v.s,v.e):"出勤");c=ok?"off":"time"}
       k=`<span class="k ${c}${t.length>6?" sm":""}">${esc(t)}</span>`}
     else if(rq)k=`<span class="k ask">未回答</span>`;
-    else if(v){const t=v.t==="on"?(b&&!b.teiji?shortT(v.s,v.e):"出勤"):v.t==="time"?shortT(v.s,v.e):v.t==="off"?"休み":v.t==="tw"?"在宅":"可";k=`<span class="k ${v.t}${t.length>6?" sm":""}">${esc(t)}</span>`}
+    else if(v){const t=v.t==="on"?(isCount()?"可":b&&!b.teiji?shortT(v.s,v.e):"出勤"):v.t==="time"?shortT(v.s,v.e):v.t==="off"?"休み":v.t==="tw"?"在宅":"可";k=`<span class="k ${v.t}${t.length>6?" sm":""}">${esc(t)}</span>`}
     else if(b&&I.holidays[d])k="";
     h+=`<button type="button" class="d ${w==0?"su":w==6?"sa":""}${I.holidays[d]?" hol":""}${rq&&I.period.open?" req":""}" data-d="${d}" ${I.period.open?"":"disabled"} aria-label="${I.period.m}月${d}日">
       <span class="n">${d}</span>${k}${I.holidays[d]?`<span class="hn">${esc(I.holidays[d])}</span>`:""}</button>`}
@@ -252,14 +268,21 @@ function openSheet(html,bind){closeSheet();const sh=document.createElement("div"
 function closeSheet(){["shade","sheet"].forEach(id=>{const x=$(id);if(x)x.remove()})}
 function timeOpts(sel){let o="";for(let m=7*60;m<=20*60;m+=15){const t=Math.floor(m/60)+":"+String(m%60).padStart(2,"0");o+=`<option${t===sel?" selected":""}>${t}</option>`}return o}
 
-$("cal").addEventListener("click",e=>{const b=e.target.closest("[data-d]");if(!b||!I.period.open)return;dayMenu(Number(b.dataset.d))});
+$("cal").addEventListener("click",e=>{
+  const wb=e.target.closest("[data-w]");
+  if(wb&&I.period.open){const w=Number(wb.dataset.w),def=defaults(),list=[];for(let d=1;d<=nDays();d++)if(wd(d)===w&&!reqOf(d))list.push(d);
+    const allOff=list.length&&list.every(d=>days[d]&&days[d].t==="off");
+    list.forEach(d=>{if(allOff){if(def[d])days[d]=def[d];else delete days[d]}else days[d]={t:"off"}});renderCal();return}
+  const b=e.target.closest("[data-d]");if(!b||!I.period.open)return;dayMenu(Number(b.dataset.d))});
+["wMinus","wPlus"].forEach((id,i)=>$(id).addEventListener("click",()=>{const n=Math.max(0,Math.min(31,(Number($("want").value)||0)+(i?1:-1)));$("want").value=n||""}));
 function dayMenu(d){
   if(reqOf(d))return reqMenu(d);
   const b=baseOf(d),v=days[d],hol=I.holidays[d],tj=I.teiji;
-  const usual=b?`いつもは 出勤 ${b.s}〜${b.e}`:"いつもは お休み";
+  const usual=isCount()?"出られる日と休みたい日を選んでください":b?`いつもは 出勤 ${b.s}〜${b.e}`:"いつもは お休み";
   const cur=v?v.t:"none";
   let opts;
-  if(b){const mn=x=>{const [h,m]=String(x).split(":").map(Number);return h*60+m};
+  if(isCount()){opts=[["on","出勤できる",""],["time","時間を指定して出勤",""],["off","休み希望",""]];if(!v)opts.unshift(["none","どちらでもない（空欄）",""])}
+  else if(b){const mn=x=>{const [h,m]=String(x).split(":").map(Number);return h*60+m};
     opts=[["on","いつもどおり",b.s+"〜"+b.e],["time","時間を変える",""]];
     if(mn(b.s)<mn(I.amEnd)&&mn(b.e)>mn(I.amEnd))opts.push(["am","午前のみ",b.s+"〜"+I.amEnd]);
     if(mn(b.s)<mn(I.pmStart)&&mn(b.e)>mn(I.pmStart))opts.push(["pm","午後のみ",I.pmStart+"〜"+b.e]);
@@ -286,12 +309,12 @@ function dayMenu(d){
       const mn=x=>{const [h,m]=x.split(":").map(Number);return h*60+m};
       if((k==="time"||k==="add"||k==="tw")&&mn(ts)>=mn(te))return alertIn(s,"終わりの時刻を、始まりより後にしてください");
       if(k==="none")delete days[d];
-      else if(k==="on")days[d]={t:"on",s:b.s,e:b.e};
+      else if(k==="on")days[d]=isCount()||!b?{t:"on"}:{t:"on",s:b.s,e:b.e};
       else if(k==="am")days[d]={t:"time",s:b.s,e:I.amEnd};
       else if(k==="pm")days[d]={t:"time",s:I.pmStart,e:b.e};
       else if(k==="off")days[d]={t:"off"};
       else days[d]={t:k,s:ts,e:te};
-      if(k==="time"&&b&&ts===b.s&&te===b.e)days[d]={t:"on",s:b.s,e:b.e};
+      if(k==="time"&&b&&!isCount()&&ts===b.s&&te===b.e)days[d]={t:"on",s:b.s,e:b.e};
       closeSheet();renderCal()};
   });
 }
@@ -324,11 +347,13 @@ function alertIn(s,t){let m=s.querySelector(".msg");if(!m){m=document.createElem
 
 /* ---- 確認して送信 ---- */
 function summary(){
-  const g={on:0,off:[],time:[],tw:[],add:[],req:[]};
+  const g={on:0,off:[],offD:[],time:[],tw:[],add:[],req:[]};
   Object.keys(days).map(Number).sort((a,b)=>a-b).forEach(d=>{const v=days[d];
     if(v.t==="req"){const ok=v.a==="ok",tm=v.s?" "+v.s+"〜"+v.e:"";
       g.req.push([lab(d)+" "+(v.k==="off"?"休みのお願い":"出勤のお願い"),v.k==="work"?(ok?"出勤できる"+tm:"出勤できない"):(ok?"休みます":"出勤したい"+tm),v.k==="work"?(ok?"accent":"off"):(ok?"off":"tm")]);return}
-    if(v.t==="on")g.on++;else if(v.t==="off")g.off.push(lab(d));else g[v.t].push(lab(d)+(v.s?" "+v.s+"〜"+v.e:""))});
+    if(v.t==="on")g.on++;else if(v.t==="off")g.offD.push(d);else g[v.t].push(lab(d)+(v.s?" "+v.s+"〜"+v.e:""))});
+  for(let i=0;i<g.offD.length;i++){let j=i;while(j+1<g.offD.length&&g.offD[j+1]===g.offD[j]+1)j++;
+    g.off.push(j-i>=2?lab(g.offD[i])+"〜"+lab(g.offD[j]):g.offD.slice(i,j+1).map(lab).join("<br>"));i=j}
   return g;
 }
 $("confirmBtn").onclick=()=>{
@@ -337,12 +362,12 @@ $("confirmBtn").onclick=()=>{
   openSheet(`<div class="conf"><h3 style="font-size:1.25rem">${esc(me)} さん</h3><p class="sub" style="margin:2px 0 8px">${I.period.m}月の希望を送信します</p>
     ${sent?`<div class="warn">${esc(sent.at)}に送信済みです。送ると前の内容を上書きします（前の内容も記録に残ります）</div>`:""}
     ${g.req.length?`<div class="sec">お願いへの回答</div><ul>${g.req.map(([a,b2,c])=>row(a,b2,c)).join("")}</ul><div class="sec">希望</div>`:""}
-    <ul>${row("出勤",g.on+"日")}${row("休み希望",g.off.join("<br>"),"off")}${row("時間を変更",g.time.join("<br>"),"tm")}${row("在宅",g.tw.join("<br>"),"tw")}${row("追加で出勤可",g.add.join("<br>"),"add")}${$("memo").value.trim()?row("ひとこと",esc($("memo").value.trim())):""}</ul></div>
+    <ul>${isCount()?row("出勤日数の希望",$("want").value?"月"+$("want").value+"日くらい":"未入力"):""}${row(isCount()?"出勤できる日":"出勤",g.on+"日")}${row("休み希望",g.off.join("<br>"),"off")}${row("時間を変更",g.time.join("<br>"),"tm")}${row("在宅",g.tw.join("<br>"),"tw")}${row("追加で出勤可",g.add.join("<br>"),"add")}${$("memo").value.trim()?row("ひとこと",esc($("memo").value.trim())):""}</ul></div>
     <div class="msg" id="cmsg" hidden></div>
     <button class="btn" id="send">この内容で送信</button><button class="btn ghost" id="back">戻って直す</button>`,s=>{
     s.querySelector("#back").onclick=closeSheet;
     s.querySelector("#send").onclick=function(){const b=this;b.disabled=true;b.textContent="送信中…";
-      rpc("submit",[{name:me,ym:I.period.ym,days,memo:$("memo").value.trim()}]).then(r=>{
+      rpc("submit",[{name:me,ym:I.period.ym,days,memo:$("memo").value.trim(),want:isCount()?$("want").value:""}]).then(r=>{
         sent=r.mine;closeSheet();render();showMsg(`送信しました（${I.period.m}月分）。〆切までは直して送り直せます`,true);window.scrollTo(0,0)
       }).catch(e=>{if(errCode(e))return;const m=s.querySelector("#cmsg");m.textContent="送信できませんでした："+errText(e);m.hidden=false;b.disabled=false;b.textContent="この内容で送信"})};
   });
@@ -350,7 +375,7 @@ $("confirmBtn").onclick=()=>{
 
 function load(){
   $("loading").hidden=false;$("main").hidden=true;$("pick").hidden=true;
-  rpc("getInit",[me]).then(r=>{I=r;sent=r.mine||null;days=sent?Object.assign({},sent.days):(r.period.open?defaults():{});$("memo").value=sent?sent.memo:"";render()})
+  rpc("getInit",[me]).then(r=>{I=r;sent=r.mine||null;days=sent?Object.assign({},sent.days):(r.period.open?defaults():{});$("memo").value=sent?sent.memo:"";$("want").value=sent&&sent.want!==""?sent.want:"";render()})
     .catch(e=>{if(!errCode(e)){$("loading").textContent="読み込めませんでした："+errText(e)}});
 }
 (function(){const n=new Date();$("todayLabel").textContent=n.getFullYear()+"年"+(n.getMonth()+1)+"月"+n.getDate()+"日（"+W[n.getDay()]+"）"})();
