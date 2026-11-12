@@ -64,6 +64,15 @@ input:focus-visible,select:focus-visible,button:focus-visible,.drop:focus-visibl
 .recent li{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}
 .recent li:last-child{border-bottom:0}
 .recent .who{font-size:12px;color:var(--muted)}
+.recent li{flex-wrap:wrap}
+.recent .fixb{flex:none;align-self:center;font:inherit;font-size:13px;font-weight:600;color:var(--accent);background:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer}
+.recent .rmain{display:flex;justify-content:space-between;gap:10px;flex:1;min-width:0}
+.fix{flex-basis:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;padding:12px;border-radius:10px;background:var(--bg);border:1px solid var(--line)}
+.fix .full{grid-column:1/-1}
+.fix .acts{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+.fix .acts .btn{flex:1}
+.btn.danger{background:transparent;color:var(--warn);border:1px solid var(--warn);font-weight:700}
+.fix .ask{grid-column:1/-1;font-size:14px;font-weight:700;color:var(--warn)}
 .empty{color:var(--muted);text-align:center;padding:16px}
 .foot{font-size:12px;color:var(--muted);text-align:center}
 .foot a{color:var(--accent)}
@@ -127,7 +136,7 @@ input:focus-visible,select:focus-visible,button:focus-visible,.drop:focus-visibl
     <div style="font-weight:700">最近の登録</div>
     <ul class="recent" id="recent"><li class="empty">読み込み中…</li></ul>
   </div>
-  <p class="foot">顧客・登録者の追加や、登録内容の修正はスプレッドシートで行います。<a id="sheetLink" href="#" target="_blank">スプレッドシートを開く</a></p>
+  <p class="foot">登録内容のまちがいは「最近の登録」の「直す」から訂正できます。顧客の追加はスプレッドシートで行います。<a id="sheetLink" href="#" target="_blank">スプレッドシートを開く</a></p>
 </div>
 
 <script>
@@ -383,11 +392,61 @@ function startApp(){
     renderResult();
   }
 
+  var recentList = [];
   function renderRecent(list){
-    $('recent').innerHTML = list && list.length ? list.slice(0,15).map(function(r){
-      return '<li><span>'+esc(r.customer)+'<div class="who">'+esc(r.date)+'　'+esc(r.who)+(r.memo?'　'+esc(r.memo):'')+'</div></span><span class="num">'+(r.count!=null?r.count+'通　':'')+'<strong>'+yen(r.amount)+'</strong></span></li>';
+    recentList = list || [];
+    $('recent').innerHTML = recentList.length ? recentList.slice(0,15).map(function(r, i){
+      return '<li data-i="'+i+'"><span class="rmain"><span>'+esc(r.customer)+'<div class="who">'+esc(r.date)+'　'+esc(r.who)+(r.memo?'　'+esc(r.memo):'')+'</div></span><span class="num">'+(r.count!=null?r.count+'通　':'')+'<strong>'+yen(r.amount)+'</strong></span></span>'+
+        (r.id?'<button type="button" class="fixb">直す</button>':'')+'</li>';
     }).join('') : '<li class="empty">まだ登録がありません</li>';
   }
+  $('recent').addEventListener('click', function(e){
+    var li = e.target.closest('li[data-i]'); if (!li) return;
+    if (e.target.closest('.fix')) return;
+    if (!e.target.closest('.fixb')) return;
+    var open = li.querySelector('.fix');
+    Array.prototype.forEach.call($('recent').querySelectorAll('.fix'), function(f){ f.remove(); });
+    if (open) return;
+    var r = recentList[Number(li.dataset.i)];
+    var opts = customers.indexOf(r.customer) >= 0 ? customers : [r.customer].concat(customers);
+    var f = document.createElement('div'); f.className = 'fix';
+    f.innerHTML = '<label class="full">到着日<input type="date" class="x-date" value="'+esc(r.day)+'"></label>'+
+      '<label class="full">顧客<select class="x-cust">'+opts.map(function(c){ return '<option'+(c===r.customer?' selected':'')+'>'+esc(c)+'</option>'; }).join('')+'</select></label>'+
+      '<label>通数<input type="number" class="x-count" inputmode="numeric" min="0" step="1" value="'+(r.count!=null?r.count:'')+'"></label>'+
+      '<label>金額（円）<input type="number" class="x-amount" inputmode="numeric" min="0" step="1" value="'+(r.amount||0)+'"></label>'+
+      '<label class="full">メモ<input type="text" class="x-memo" value="'+esc(r.memo)+'"></label>'+
+      (r.split?'<div class="full who">※1枚の交付証を複数の顧客に分けた記録です。この顧客の分だけ直ります</div>':'')+
+      '<div class="x-msg full msg" hidden></div>'+
+      '<div class="acts"><button type="button" class="btn x-save">訂正を保存</button><button type="button" class="btn ghost x-cancel">やめる</button></div>'+
+      '<div class="acts"><button type="button" class="btn danger x-del">この記録を削除</button></div>';
+    li.appendChild(f);
+    var q = function(c){ return f.querySelector(c); };
+    var fmsg = function(t){ var m=q('.x-msg'); m.textContent=t; m.hidden=!t; };
+    var who = function(){ var w=$('fWho').value; if (!w) fmsg('上の「登録者」で自分の名前を選んでから、もう一度押してください'); return w; };
+    q('.x-cancel').onclick = function(){ f.remove(); };
+    q('.x-save').onclick = function(){
+      var w = who(); if (!w) return;
+      if (q('.x-amount').value === '') return fmsg('金額を入力してください');
+      var b = this; b.disabled = true; b.textContent = '保存中…';
+      RUN.run.withSuccessHandler(function(res){
+        customers = res.customers; renderRecent(res.recent); showMsg('訂正しました：'+q('.x-cust').value+' '+yen(q('.x-amount').value), true);
+      }).withFailureHandler(function(err){ fmsg('訂正できませんでした：'+err.message); b.disabled=false; b.textContent='訂正を保存'; })
+      .updateEntry({ id:r.id, date:q('.x-date').value, customer:q('.x-cust').value, count:q('.x-count').value, amount:q('.x-amount').value, memo:q('.x-memo').value.trim(), who:w });
+    };
+    q('.x-del').onclick = function(){
+      var w = who(); if (!w) return;
+      var box = this.parentNode;
+      box.innerHTML = '<div class="ask">「'+esc(r.customer)+' '+yen(r.amount)+'」を削除します。よろしいですか？</div><button type="button" class="btn danger x-yes">削除する</button><button type="button" class="btn ghost x-no">やめる</button>';
+      box.querySelector('.x-no').onclick = function(){ f.remove(); };
+      box.querySelector('.x-yes').onclick = function(){
+        var b = this; b.disabled = true; b.textContent = '削除中…';
+        RUN.run.withSuccessHandler(function(res){
+          customers = res.customers; renderRecent(res.recent); showMsg('削除しました：'+r.customer+' '+yen(r.amount), true);
+        }).withFailureHandler(function(err){ fmsg('削除できませんでした：'+err.message); b.disabled=false; b.textContent='削除する'; })
+        .deleteEntry({ id:r.id, who:w });
+      };
+    };
+  });
 }
 (function(){var n=new Date(),W=["日","月","火","水","木","金","土"],el=document.getElementById("todayLabel");if(el)el.textContent=n.getFullYear()+"年"+(n.getMonth()+1)+"月"+n.getDate()+"日（"+W[n.getDay()]+"）";})();
 if(IN_PWA)document.getElementById("backMenu").hidden=false;
