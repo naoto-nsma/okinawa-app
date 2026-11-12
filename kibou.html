@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>シフト希望の送信｜N-SMART 沖縄事務所</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="N-SMART沖縄">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#f5f2fb">
+<script src="config.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=BIZ+UDGothic:wght@700&display=swap">
+<style>
+/* Layout: 見出し → あなた（名前）→ 〆切 → 翌月のカレンダー → ひとこと → 確認して送信。日付タップで下から選択肢 */
+:root{
+  --bg:#eff7f1; --surface:#ffffff; --line:#cfe5d5; --fg:#1f2a24; --muted:#5f6f66;
+  --accent:#2f7d4f; --accent-fg:#ffffff; --accent-soft:#dcefe2;
+  --off:#c2456a; --off-soft:#fbe2ea; --tm:#a35a00; --tm-soft:#fdeccf; --tw:#b0279b; --tw-soft:#fbd9f4; --add:#2c6aa8; --add-soft:#e3eefa;
+  --hol:#f7f9f8; --shade:rgba(0,0,0,.38);
+  --font:"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121a15; --surface:#1b241e; --line:#2e3d33; --fg:#e6efe9; --muted:#9aaba0;
+  --accent:#7cc79a; --accent-fg:#0f1a13; --accent-soft:#1f3527;
+  --off:#f08aa8; --off-soft:#3c2430; --tm:#f0b45a; --tm-soft:#3a2a12; --tw:#f39be3; --tw-soft:#4a2343; --add:#8cb8ea; --add-soft:#1d2c3d;
+  --hol:#161f19; --shade:rgba(0,0,0,.6); color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:16px;line-height:1.6;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:calc(12px + env(safe-area-inset-top,0px)) calc(40px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+header{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+h1{font-size:1.35rem;line-height:1.35;margin:0;font-weight:700}
+.back{display:flex;align-items:center;width:fit-content;min-height:40px;padding:6px 16px 6px 12px;margin-bottom:10px;border-radius:999px;font-size:1rem;font-weight:700;line-height:1.2;color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent);text-decoration:none}
+.today{color:var(--muted);font-size:.95rem}
+button{font:inherit;cursor:pointer}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.me{flex-direction:row;justify-content:space-between;align-items:center;padding:10px 14px}
+.me small{display:block;font-size:12px;color:var(--muted)} .me b{font-size:1.15rem}
+.link{border:1px solid var(--line);background:none;color:var(--accent);border-radius:8px;padding:5px 12px;font-size:14px;font-weight:700}
+.band{font-size:14px;font-weight:700;padding:9px 12px;border-radius:10px}
+.band.open{color:var(--tm);background:var(--tm-soft)} .band.closed{color:var(--muted);background:var(--surface);border:1px solid var(--line)}
+.status{font-size:13px;color:var(--muted)} .status b{color:var(--accent)}
+.mh{display:flex;justify-content:space-between;align-items:baseline;margin:2px 2px -4px}.mh b{font-size:1.1rem}.mh small{color:var(--muted);font-size:13px}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.w{font-size:11px;text-align:center;color:var(--muted);font-weight:700}.w.su{color:var(--off)}.w.sa{color:var(--add)}
+.d{background:var(--surface);border:1px solid var(--line);border-radius:8px;min-height:58px;padding:3px 1px;text-align:center;font-size:12px;color:var(--fg);display:flex;flex-direction:column;align-items:center;gap:2px}
+.d:disabled{cursor:default}
+.d .n{font-weight:700;font-size:13px;line-height:1.3}.d.su .n,.d.hol .n{color:var(--off)}.d.sa .n{color:var(--add)}
+.d.hol{background:var(--hol)}
+.d.blank{background:transparent;border:0}
+.k{display:block;width:calc(100% - 4px);font-size:10.5px;font-weight:700;border-radius:5px;padding:1px 0;line-height:1.35;white-space:nowrap;overflow:hidden}
+.k.sm{font-size:9.5px;letter-spacing:-.02em}
+.k.on{background:var(--accent-soft);color:var(--accent)} .k.time{background:var(--tm-soft);color:var(--tm)}
+.k.off{background:var(--off-soft);color:var(--off)} .k.tw{background:var(--tw-soft);color:var(--tw)} .k.add{background:var(--add-soft);color:var(--add)}
+.d.req{border:2px solid var(--off);position:relative;overflow:visible}
+.d.req::after{content:"お願い";position:absolute;top:-8px;right:-3px;font-size:8.5px;font-weight:700;background:var(--off);color:#fff;border-radius:4px;padding:0 3px;line-height:1.5}
+.k.ask{background:transparent;color:var(--off);border:1px dashed var(--off)}
+.reqbox{background:var(--off-soft);border-radius:10px;padding:10px 12px;font-size:13.5px;color:var(--off);font-weight:700;line-height:1.6}
+.reqbox small{display:block;color:var(--fg);font-weight:400}
+.reqmsg{background:var(--off-soft);border-radius:10px;padding:10px 12px;font-size:13.5px}.reqmsg b{color:var(--off)}
+.sec{font-size:12px;font-weight:700;color:var(--muted);margin:10px 0 0}
+.hn{font-size:9px;color:var(--off);line-height:1.1;overflow:hidden;white-space:nowrap;max-width:100%}
+.leg{display:flex;flex-wrap:wrap;gap:6px;font-size:11.5px}.leg .k{width:auto;padding:2px 7px;font-size:11.5px}
+input[type=text],select{font:inherit;font-size:16px;width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg)}
+.btn{font-weight:700;border:0;border-radius:10px;padding:14px;background:var(--accent);color:var(--accent-fg);font-size:16px;width:100%}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);font-weight:500}
+.msg{font-size:14px;padding:10px 12px;border-radius:8px;background:var(--off-soft)}
+.msg.ok{background:transparent;border:1px solid var(--accent);color:var(--accent);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:15px;padding:9px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.note{font-size:13px;color:var(--muted);margin:0}
+/* 下から出る選択肢 */
+.shade{position:fixed;inset:0;background:var(--shade);z-index:20}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:var(--surface);border-radius:20px 20px 0 0;max-width:560px;margin:0 auto;
+  padding:16px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:10px;max-height:88vh;overflow:auto}
+.sheet h3{margin:0;font-size:1.1rem}.sheet .sub{margin:-6px 0 0;color:var(--muted);font-size:13px}
+.opt{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.o{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:11px 8px;font-weight:700;font-size:14px;line-height:1.35}
+.o small{display:block;font-weight:400;font-size:11.5px;color:var(--muted)}
+.o[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1.5px var(--accent);color:var(--accent)}
+.o.offb{color:var(--off)}
+.times{display:flex;gap:8px;align-items:center}.times select{flex:1;text-align:center}
+.conf ul{list-style:none;margin:0;padding:0;font-size:14px}
+.conf li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line)}
+.conf li b{text-align:right}
+.warn{font-size:13px;font-weight:700;color:var(--tm);background:var(--tm-soft);border-radius:10px;padding:9px 12px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a id="backMenu" class="back" href="index.html" hidden>‹ メニュー</a>
+    <h1>シフト希望の送信</h1>
+    <span class="today" id="todayLabel"></span>
+  </header>
+
+  <section id="pick" class="panel" hidden>
+    <b>あなたの名前を選んでください</b>
+    <p class="note">次からは、このスマホが名前を覚えます。</p>
+    <div class="chips" id="names"></div>
+  </section>
+
+  <section id="main" hidden>
+    <div class="wrap" style="gap:12px">
+      <div class="panel me"><div><small>あなた</small><b id="meName"></b></div><button type="button" class="link" id="chg">変更</button></div>
+      <div class="band" id="band"></div>
+      <div class="status" id="status"></div>
+      <div class="reqbox" id="reqbox" hidden></div>
+      <div class="mh"><b id="mTitle"></b><small id="mHint">日付をタップして変更</small></div>
+      <div class="cal" id="cal"></div>
+      <div class="leg"><span class="k on">出勤</span><span class="k time">時間を変更</span><span class="k off">休み希望</span><span class="k tw">在宅</span><span class="k add">追加で出勤可</span></div>
+      <input type="text" id="memo" placeholder="ひとこと（任意）：通院のため26日は午前のみ など" aria-label="ひとこと">
+      <div id="msg" class="msg" hidden></div>
+      <button class="btn" id="confirmBtn">確認して送信</button>
+    </div>
+  </section>
+  <p class="note" id="loading" style="text-align:center">読み込み中…</p>
+</div>
+
+<script>
+const APP_MOD="kibou";
+/* ---- 通信と合言葉（N-SMART 沖縄事務所アプリ共通） ---- */
+const IN_GAS=!!(window.google&&google.script&&google.script.run);
+const API_URL=((window.APP_CONFIG||{}).urls||{})[APP_MOD]||"";
+let KEY="";try{KEY=localStorage.getItem("passKey")||""}catch(e){}
+function errCode(e){const m=String((e&&e.message)||e||"");const k=m.match(/(BADKEY|NOKEY|BUSY):/);return k?k[1]:""}
+function errText(e){return String((e&&e.message)||e||"").replace(/^.*?(BADKEY|NOKEY|BUSY):/,"")}
+function rawRpc(fn,args,key){
+  if(IN_GAS)return new Promise((ok,ng)=>google.script.run.withSuccessHandler(ok).withFailureHandler(ng).rpc(fn,args,key));
+  if(!API_URL){
+    if(typeof MOCK!=="undefined"&&MOCK[fn])return new Promise((ok,ng)=>{try{ok(MOCK[fn](...args))}catch(e){ng(e)}});
+    if(fn==="ping"&&typeof MOCK!=="undefined")return Promise.resolve(true);
+    return Promise.reject(new Error("設定ファイル（config.js）にURLが入っていません"));
+  }
+  return fetch(API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({fn,args,key})})
+    .then(r=>r.json()).then(j=>{if(!j.ok)throw new Error(j.error);return j.data});
+}
+function rpc(fn,args){return rawRpc(fn,args||[],KEY).catch(e=>{const c=errCode(e);if(c==="BADKEY"||c==="NOKEY")showGate(c==="NOKEY"?errText(e):"合言葉が変わりました。新しい合言葉を入力してください。");throw e})}
+function gateEsc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function showGate(msg){
+  if(document.getElementById("gate"))return;
+  if(!document.getElementById("gateCss")){const st=document.createElement("style");st.id="gateCss";st.textContent=`
+#gate{position:fixed;inset:0;z-index:100;background:#f5f2fb;color:#221d2e;display:flex;align-items:center;justify-content:center;
+ padding:max(24px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(24px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+ font-family:"BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",Meiryo,system-ui,sans-serif}
+#gate form{width:100%;max-width:380px;display:flex;flex-direction:column;gap:14px;text-align:center}
+#gate h2{margin:0;font-size:1.2rem}#gate p{margin:0;color:#5d6a78;font-size:.92rem;line-height:1.6}
+#gate .gi svg,#gate .gi img{width:88px;height:88px;border-radius:20px;display:block;margin:0 auto}
+#gate input{font:inherit;font-size:1.1rem;padding:14px;border-radius:10px;border:1px solid #ddd5ee;background:#fff;color:#1d2733;text-align:center}
+#gate button{font:inherit;font-weight:700;font-size:1.1rem;padding:14px;border-radius:10px;border:0;background:#6a4fa3;color:#fff;cursor:pointer}
+#gate .ge{color:#a35a00;font-weight:700}
+@media (prefers-color-scheme:dark){#gate{background:#17141f;color:#ece8f4}#gate p{color:#9aa7b4}#gate input{background:#211c2c;border-color:#3a3249;color:#e8edf2}#gate button{background:#b49be6;color:#1a1424}#gate .ge{color:#f0a94a}}`;document.head.appendChild(st)}
+  const d=document.createElement("div");d.id="gate";
+  d.innerHTML=`<form id="gateForm" autocomplete="off">
+    <div class="gi" aria-hidden="true">${ICON_SVG}</div>
+    <h2>N-SMART 沖縄事務所</h2>
+    <p>はじめに、管理者から伝えられた合言葉を入力してください。次からは入力しなくても開けます。</p>
+    <input id="gateKey" type="password" autocapitalize="off" spellcheck="false" placeholder="合言葉" aria-label="合言葉">
+    <p id="gateErr" class="ge"${msg?"":" hidden"}>${gateEsc(msg||"")}</p>
+    <button id="gateBtn">はじめる</button></form>`;
+  document.body.appendChild(d);
+  d.querySelector("form").addEventListener("submit",async e=>{
+    e.preventDefault();
+    const v=d.querySelector("#gateKey").value.trim(),err=d.querySelector("#gateErr"),btn=d.querySelector("#gateBtn");
+    if(!v){err.textContent="合言葉を入力してください。";err.hidden=false;return}
+    btn.disabled=true;btn.textContent="確認しています…";err.hidden=true;
+    try{await rawRpc("ping",[],v);try{localStorage.setItem("passKey",v)}catch(x){}KEY=v;location.reload()}
+    catch(x){btn.disabled=false;btn.textContent="はじめる";const c=errCode(x);
+      err.textContent=c==="BADKEY"?"合言葉が違います。もう一度確かめてください。":c?errText(x):"つながりませんでした。電波のよい所で、もう一度押してください。";err.hidden=false}
+  });
+  setTimeout(()=>{const i=document.getElementById("gateKey");if(i)i.focus()},50);
+}
+const ICON_SVG=`<img alt="" src="data:image/jpeg;base64,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">`;
+/* PWAから開いたときだけ「メニューに戻る」を出す */
+const IN_PWA=!IN_GAS&&!!API_URL;
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const store=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}};
+const W=["日","月","火","水","木","金","土"];
+let I=null,me=store("kibou_name")||"",days={},sent=null;
+
+function shortT(s,e){const f=x=>String(x||"").replace(/:00$/,"");return f(s)+"-"+f(e)}
+function wd(d){return new Date(I.period.y,I.period.m-1,d).getDay()}
+function baseOf(d){const w=wd(d);return (I.week[me]||{})[w]||null}
+function nDays(){return new Date(I.period.y,I.period.m,0).getDate()}
+function showMsg(t,ok){const m=$("msg");m.textContent=t||"";m.className="msg"+(ok?" ok":"");m.hidden=!t}
+function lab(d){return I.period.m+"/"+d+"（"+W[wd(d)]+"）"}
+function fmtDue(s){const p=s.split("-").map(Number);const dt=new Date(p[0],p[1]-1,p[2]);return (p[1])+"月"+p[2]+"日（"+W[dt.getDay()]+"）"}
+
+function reqOf(d){return (I.reqs||[]).find(r=>r.d===d)||null}
+function reqLabel(r){return r.k==="off"?"休みのお願い":"出勤のお願い"}
+function unanswered(){return (I.reqs||[]).filter(r=>!(days[r.d]&&days[r.d].t==="req"))}
+/* いつもの予定から、来月の初期状態をつくる（祝日は外す） */
+function defaults(){const o={};for(let d=1;d<=nDays();d++){const b=baseOf(d);if(b&&!I.holidays[d])o[d]={t:"on",s:b.s,e:b.e}}
+  (I.reqs||[]).forEach(r=>{if(r.k==="off")o[r.d]={t:"req",k:"off",a:"ok"};else delete o[r.d]});return o}
+
+function render(){
+  $("loading").hidden=true;
+  if(!me||I.staff.indexOf(me)<0){me="";$("main").hidden=true;$("pick").hidden=false;
+    $("names").innerHTML=I.staff.map(n=>`<button type="button" class="chip" data-n="${esc(n)}">${esc(n)}</button>`).join("");return}
+  $("pick").hidden=true;$("main").hidden=false;$("meName").textContent=me;
+  const p=I.period;
+  $("band").className="band "+(p.open?"open":"closed");
+  $("band").textContent=p.open?`${p.m}月分の〆切：${fmtDue(p.due)}まで${p.daysLeft?" あと"+p.daysLeft+"日":"（今日まで）"}`:
+    `${p.m}月分の受付は締め切りました。次は ${fmtDue(p.nextOpen)} から受け付けます`;
+  $("status").innerHTML=sent?`<b>送信済み</b>（${esc(sent.at)}）。${p.open?"〆切までは何度でも直して送り直せます":"送った内容を表示しています"}`:(p.open?"まだ送っていません":"この月の送信はありません");
+  const rq=I.reqs||[],un=unanswered();
+  $("reqbox").hidden=!(rq.length&&p.open);
+  $("reqbox").innerHTML=`管理者からのお願いが${rq.length}件あります（赤い枠の日）${un.length?`　<span style="font-weight:400">未回答 ${un.length}件</span>`:""}<small>${rq.map(r=>esc(lab(r.d)+" "+reqLabel(r))).join("・")}</small>`;
+  if(sent&&un.length&&p.open)$("status").innerHTML+=`<br><b style="color:var(--off)">新しいお願いがあります。答えてから送り直してください</b>`;
+  $("mTitle").textContent=p.y+"年"+p.m+"月";$("mHint").hidden=!p.open;
+  $("memo").disabled=!p.open;$("confirmBtn").hidden=!p.open;
+  renderCal();
+}
+function renderCal(){
+  let h=W.map((w,i)=>`<div class="w ${i==0?"su":i==6?"sa":""}">${w}</div>`).join("");
+  for(let i=0;i<wd(1);i++)h+=`<div class="d blank"></div>`;
+  for(let d=1;d<=nDays();d++){const w=wd(d),v=days[d],b=baseOf(d);let k="";
+    const rq=reqOf(d);
+    if(v&&v.t==="req"){const ok=v.a==="ok";let t,c;
+      if(v.k==="work"){t=ok?(v.s?shortT(v.s,v.e):"出勤"):"出勤NG";c=ok?"on":"off"}else{t=ok?"休み":(v.s?shortT(v.s,v.e):"出勤");c=ok?"off":"time"}
+      k=`<span class="k ${c}${t.length>6?" sm":""}">${esc(t)}</span>`}
+    else if(rq)k=`<span class="k ask">未回答</span>`;
+    else if(v){const t=v.t==="on"?(b&&!b.teiji?shortT(v.s,v.e):"出勤"):v.t==="time"?shortT(v.s,v.e):v.t==="off"?"休み":v.t==="tw"?"在宅":"可";k=`<span class="k ${v.t}${t.length>6?" sm":""}">${esc(t)}</span>`}
+    else if(b&&I.holidays[d])k="";
+    h+=`<button type="button" class="d ${w==0?"su":w==6?"sa":""}${I.holidays[d]?" hol":""}${rq&&I.period.open?" req":""}" data-d="${d}" ${I.period.open?"":"disabled"} aria-label="${I.period.m}月${d}日">
+      <span class="n">${d}</span>${k}${I.holidays[d]?`<span class="hn">${esc(I.holidays[d])}</span>`:""}</button>`}
+  $("cal").innerHTML=h;
+}
+
+/* ---- 名前 ---- */
+$("names").addEventListener("click",e=>{const b=e.target.closest("[data-n]");if(!b)return;
+  if(!confirmName(b.dataset.n))return;});
+function confirmName(n){
+  openSheet(`<h3>${esc(n)} さんで合っていますか？</h3><p class="sub">このスマホに名前を覚えます。</p>
+    <button class="btn" id="yes">はい、${esc(n)} です</button><button class="btn ghost" id="no">選び直す</button>`,s=>{
+    s.querySelector("#no").onclick=closeSheet;
+    s.querySelector("#yes").onclick=()=>{closeSheet();me=n;store("kibou_name",n);load()}});
+}
+$("chg").onclick=()=>{me="";store("kibou_name",null);sent=null;days={};render()};
+
+/* ---- 下から出る画面 ---- */
+function openSheet(html,bind){closeSheet();const sh=document.createElement("div");sh.className="shade";sh.id="shade";sh.onclick=closeSheet;
+  const s=document.createElement("div");s.className="sheet";s.id="sheet";s.setAttribute("role","dialog");s.innerHTML=html;document.body.append(sh,s);bind&&bind(s)}
+function closeSheet(){["shade","sheet"].forEach(id=>{const x=$(id);if(x)x.remove()})}
+function timeOpts(sel){let o="";for(let m=7*60;m<=20*60;m+=15){const t=Math.floor(m/60)+":"+String(m%60).padStart(2,"0");o+=`<option${t===sel?" selected":""}>${t}</option>`}return o}
+
+$("cal").addEventListener("click",e=>{const b=e.target.closest("[data-d]");if(!b||!I.period.open)return;dayMenu(Number(b.dataset.d))});
+function dayMenu(d){
+  if(reqOf(d))return reqMenu(d);
+  const b=baseOf(d),v=days[d],hol=I.holidays[d],tj=I.teiji;
+  const usual=b?`いつもは 出勤 ${b.s}〜${b.e}`:"いつもは お休み";
+  const cur=v?v.t:"none";
+  let opts;
+  if(b){const mn=x=>{const [h,m]=String(x).split(":").map(Number);return h*60+m};
+    opts=[["on","いつもどおり",b.s+"〜"+b.e],["time","時間を変える",""]];
+    if(mn(b.s)<mn(I.amEnd)&&mn(b.e)>mn(I.amEnd))opts.push(["am","午前のみ",b.s+"〜"+I.amEnd]);
+    if(mn(b.s)<mn(I.pmStart)&&mn(b.e)>mn(I.pmStart))opts.push(["pm","午後のみ",I.pmStart+"〜"+b.e]);
+    opts.push(["tw","在宅",""],["off","休み希望",""])}
+  else{opts=[["none","お休み（そのまま）",""],["add","追加で出勤できる",""],["tw","在宅で出勤できる",""]]}
+  const isAm=v&&v.t==="time"&&b&&v.s===b.s&&v.e===I.amEnd, isPm=v&&v.t==="time"&&b&&v.s===I.pmStart&&v.e===b.e;
+  const pressed=k=>k===(isAm?"am":isPm?"pm":cur);
+  const s0=(v&&v.s)||(b?b.s:tj.s),e0=(v&&v.e)||(b?b.e:tj.e);
+  openSheet(`<h3>${I.period.m}月${d}日（${W[wd(d)]}）${hol?`<span style="color:var(--off);font-size:.85rem"> ${esc(hol)}</span>`:""}</h3><p class="sub">${usual}</p>
+    <div class="opt">${opts.map(([k,t,sub])=>`<button type="button" class="o${k==="off"?" offb":""}" data-k="${k}" aria-pressed="${pressed(k)}">${t}${sub?`<small>${sub}</small>`:""}</button>`).join("")}</div>
+    <div class="times" id="tm"><select id="ts" aria-label="始まり">${timeOpts(s0)}</select>〜<select id="te" aria-label="終わり">${timeOpts(e0)}</select></div>
+    <button class="btn" id="ok">決定</button>`,s=>{
+    let k=[...s.querySelectorAll(".o")].find(x=>x.getAttribute("aria-pressed")==="true");k=k?k.dataset.k:(b?"on":"none");
+    const showT=()=>{s.querySelector("#tm").hidden=!(k==="time"||k==="add"||(k==="tw"))};
+    s.querySelector(".opt").addEventListener("click",ev=>{const o=ev.target.closest(".o");if(!o)return;k=o.dataset.k;
+      s.querySelectorAll(".o").forEach(x=>x.setAttribute("aria-pressed",String(x===o)));
+      if(k==="am"){s.querySelector("#ts").value=b.s;s.querySelector("#te").value=I.amEnd}
+      if(k==="pm"){s.querySelector("#ts").value=I.pmStart;s.querySelector("#te").value=b.e}
+      if(k==="on"&&b){s.querySelector("#ts").value=b.s;s.querySelector("#te").value=b.e}
+      showT()});
+    showT();
+    s.querySelector("#ok").onclick=()=>{
+      const ts=s.querySelector("#ts").value,te=s.querySelector("#te").value;
+      const mn=x=>{const [h,m]=x.split(":").map(Number);return h*60+m};
+      if((k==="time"||k==="add"||k==="tw")&&mn(ts)>=mn(te))return alertIn(s,"終わりの時刻を、始まりより後にしてください");
+      if(k==="none")delete days[d];
+      else if(k==="on")days[d]={t:"on",s:b.s,e:b.e};
+      else if(k==="am")days[d]={t:"time",s:b.s,e:I.amEnd};
+      else if(k==="pm")days[d]={t:"time",s:I.pmStart,e:b.e};
+      else if(k==="off")days[d]={t:"off"};
+      else days[d]={t:k,s:ts,e:te};
+      if(k==="time"&&b&&ts===b.s&&te===b.e)days[d]={t:"on",s:b.s,e:b.e};
+      closeSheet();renderCal()};
+  });
+}
+function reqMenu(d){
+  const r=reqOf(d),b=baseOf(d),v=days[d],tj=I.teiji,hol=I.holidays[d];
+  const usual=b?`いつもは 出勤 ${b.s}〜${b.e}`:"いつもは お休み";
+  const opts=r.k==="work"?[["ok","出勤できる"],["ng","出勤できない"]]:[["ok","休みます"],["ng","出勤したい"]];
+  const cur=v&&v.t==="req"?v.a:"";
+  const s0=(v&&v.s)||(b?b.s:tj.s),e0=(v&&v.e)||(b?b.e:tj.e);
+  openSheet(`<h3>${I.period.m}月${d}日（${W[wd(d)]}）${hol?`<span style="color:var(--off);font-size:.85rem"> ${esc(hol)}</span>`:""}</h3><p class="sub">${usual}</p>
+    <div class="reqmsg"><b>${reqLabel(r)}</b>${r.all?"（全員）":""}${r.msg?"<br>"+esc(r.msg):""}</div>
+    <div class="opt">${opts.map(([k,t])=>`<button type="button" class="o${(r.k==="work"&&k==="ng")||(r.k==="off"&&k==="ok")?" offb":""}" data-k="${k}" aria-pressed="${cur===k}">${t}</button>`).join("")}</div>
+    <div class="times" id="tm"><select id="ts" aria-label="始まり">${timeOpts(s0)}</select>〜<select id="te" aria-label="終わり">${timeOpts(e0)}</select></div>
+    ${r.k==="off"?'<p class="sub" id="ngnote" hidden style="margin:0">理由は「ひとこと」に書いてください</p>':""}
+    <button class="btn" id="ok">決定</button>`,s=>{
+    let k=cur;
+    const showT=()=>{const need=(r.k==="work"&&k==="ok")||(r.k==="off"&&k==="ng");s.querySelector("#tm").hidden=!need;const n=s.querySelector("#ngnote");if(n)n.hidden=!(r.k==="off"&&k==="ng")};
+    s.querySelector(".opt").addEventListener("click",ev=>{const o=ev.target.closest(".o");if(!o)return;k=o.dataset.k;s.querySelectorAll(".o").forEach(x=>x.setAttribute("aria-pressed",String(x===o)));showT()});
+    showT();
+    s.querySelector("#ok").onclick=()=>{
+      if(!k)return alertIn(s,"どちらかを選んでください");
+      const ts=s.querySelector("#ts").value,te=s.querySelector("#te").value,mn=x=>{const [h,m]=x.split(":").map(Number);return h*60+m};
+      const need=(r.k==="work"&&k==="ok")||(r.k==="off"&&k==="ng");
+      if(need&&mn(ts)>=mn(te))return alertIn(s,"終わりの時刻を、始まりより後にしてください");
+      days[d]=need?{t:"req",k:r.k,a:k,s:ts,e:te}:{t:"req",k:r.k,a:k};
+      closeSheet();render()};
+  });
+}
+function alertIn(s,t){let m=s.querySelector(".msg");if(!m){m=document.createElement("div");m.className="msg";s.querySelector("#ok").before(m)}m.textContent=t}
+
+/* ---- 確認して送信 ---- */
+function summary(){
+  const g={on:0,off:[],time:[],tw:[],add:[],req:[]};
+  Object.keys(days).map(Number).sort((a,b)=>a-b).forEach(d=>{const v=days[d];
+    if(v.t==="req"){const ok=v.a==="ok",tm=v.s?" "+v.s+"〜"+v.e:"";
+      g.req.push([lab(d)+" "+(v.k==="off"?"休みのお願い":"出勤のお願い"),v.k==="work"?(ok?"出勤できる"+tm:"出勤できない"):(ok?"休みます":"出勤したい"+tm),v.k==="work"?(ok?"accent":"off"):(ok?"off":"tm")]);return}
+    if(v.t==="on")g.on++;else if(v.t==="off")g.off.push(lab(d));else g[v.t].push(lab(d)+(v.s?" "+v.s+"〜"+v.e:""))});
+  return g;
+}
+$("confirmBtn").onclick=()=>{
+  showMsg("");
+  const un=unanswered();if(un.length){showMsg("お願いへの回答がまだの日があります："+un.map(r=>lab(r.d)).join("、")+"。赤い枠の日をタップして答えてください");return}const g=summary(),row=(k,v,c)=>`<li><span>${k}</span><b${c?` style="color:var(--${c})"`:""}>${v||"なし"}</b></li>`;
+  openSheet(`<div class="conf"><h3 style="font-size:1.25rem">${esc(me)} さん</h3><p class="sub" style="margin:2px 0 8px">${I.period.m}月の希望を送信します</p>
+    ${sent?`<div class="warn">${esc(sent.at)}に送信済みです。送ると前の内容を上書きします（前の内容も記録に残ります）</div>`:""}
+    ${g.req.length?`<div class="sec">お願いへの回答</div><ul>${g.req.map(([a,b2,c])=>row(a,b2,c)).join("")}</ul><div class="sec">希望</div>`:""}
+    <ul>${row("出勤",g.on+"日")}${row("休み希望",g.off.join("<br>"),"off")}${row("時間を変更",g.time.join("<br>"),"tm")}${row("在宅",g.tw.join("<br>"),"tw")}${row("追加で出勤可",g.add.join("<br>"),"add")}${$("memo").value.trim()?row("ひとこと",esc($("memo").value.trim())):""}</ul></div>
+    <div class="msg" id="cmsg" hidden></div>
+    <button class="btn" id="send">この内容で送信</button><button class="btn ghost" id="back">戻って直す</button>`,s=>{
+    s.querySelector("#back").onclick=closeSheet;
+    s.querySelector("#send").onclick=function(){const b=this;b.disabled=true;b.textContent="送信中…";
+      rpc("submit",[{name:me,ym:I.period.ym,days,memo:$("memo").value.trim()}]).then(r=>{
+        sent=r.mine;closeSheet();render();showMsg(`送信しました（${I.period.m}月分）。〆切までは直して送り直せます`,true);window.scrollTo(0,0)
+      }).catch(e=>{if(errCode(e))return;const m=s.querySelector("#cmsg");m.textContent="送信できませんでした："+errText(e);m.hidden=false;b.disabled=false;b.textContent="この内容で送信"})};
+  });
+};
+
+function load(){
+  $("loading").hidden=false;$("main").hidden=true;$("pick").hidden=true;
+  rpc("getInit",[me]).then(r=>{I=r;sent=r.mine||null;days=sent?Object.assign({},sent.days):(r.period.open?defaults():{});$("memo").value=sent?sent.memo:"";render()})
+    .catch(e=>{if(!errCode(e)){$("loading").textContent="読み込めませんでした："+errText(e)}});
+}
+(function(){const n=new Date();$("todayLabel").textContent=n.getFullYear()+"年"+(n.getMonth()+1)+"月"+n.getDate()+"日（"+W[n.getDay()]+"）"})();
+if(IN_PWA)$("backMenu").hidden=false;
+if(KEY)load(); else showGate("");
+</script>
+</body>
+</html>

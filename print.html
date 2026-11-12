@@ -169,7 +169,6 @@ ul.rec li:last-child{border-bottom:0}
       <button class="btn" id="kBtn">カウンターを記録する</button>
     </div>
   </section>
-  <p class="foot">単価や顧客の追加はスプレッドシートで行います。<a id="sheetLink" href="#" target="_blank" rel="noopener">スプレッドシートを開く</a></p>
 </div>
 
 <script>
@@ -363,7 +362,7 @@ function start(){
   renderSide();
   rpc("getInit",[]).then(r=>{
     S=r;if(who&&S.staff.indexOf(who)<0)who="";
-    renderWho();renderCust();renderRecent();recalc();$("sheetLink").href=r.sheetUrl;
+    renderWho();renderCust();renderRecent();recalc();
     $("saveBtn").disabled=false;$("saveBtn").textContent="記録する";
     if(!S.customers.length)showMsg("msg","顧客がまだありません。スプレッドシートの「設定」を確認してください");
   }).catch(e=>{if(!errCode(e))showMsg("msg","読み込めませんでした："+errText(e))});

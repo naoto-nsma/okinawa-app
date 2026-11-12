@@ -187,8 +187,8 @@ let tab="day", cur=new Date(now.getFullYear(),now.getMonth(),now.getDate()), mon
 try{me=localStorage.getItem("shiftMe")||localStorage.getItem("lastName")||""}catch(e){}
 
 /* シートの表（1行目タイトル、3行目日付、4行目曜日、5行目から1人1行・1日2列：業務／TEL）を読み取る */
-function parse(grid,notes,tele,nameBg){
-  notes=notes||{};nameBg=nameBg||[];const colors={};const TW=new Set(tele||[]);
+function parse(grid,notes,tele,nameBg,BASE,Y,M){
+  notes=notes||{};BASE=BASE||{};nameBg=nameBg||[];const colors={};const TW=new Set(tele||[]);
   const days={},people=[];
   const r3=grid[2]||[];
   const cols=[];
@@ -202,7 +202,8 @@ function parse(grid,notes,tele,nameBg){
       const duty=String(row[c]||"").trim(),extra=String(row[c+1]||"").trim();
       if(!duty&&!extra)return;
       const memo=[notes[r+","+c],notes[r+","+(c+1)]].filter(Boolean).join(" ").replace(/\s+/g," ");
-      (days[d]=days[d]||[]).push({name,duty,memo,tw:TW.has(r+","+c),tel:/TEL/i.test(extra)||/TEL/i.test(duty)});
+      const bt=!memo&&BASE[name]?BASE[name][new Date(Y,M-1,d).getDay()]||"":"";
+      (days[d]=days[d]||[]).push({name,duty,memo:memo||bt,tw:TW.has(r+","+c),tel:/TEL/i.test(extra)||/TEL/i.test(duty)});
     });
   }
   // リーダー・サブリーダーだけ色を付ける：同じ色が3人以上いる色（メンバーの色）は付けない
@@ -214,7 +215,7 @@ async function month(y,m){
   const k=`${y}-${pad(m)}`;
   if(months[k])return months[k];
   const res=await rpc("shiftGetMonth",[k]);
-  months[k]=res&&res.grid?{...parse(res.grid,res.notes,res.tele,res.nameBg),found:true,hol:res.holidays||{}}:{days:{},people:[],found:false,hol:{}};
+  months[k]=res&&res.grid?{...parse(res.grid,res.notes,res.tele,res.nameBg,res.base,y,m),found:true,hol:res.holidays||{}}:{days:{},people:[],found:false,hol:{}};
   return months[k];
 }
 function setStatus(m){$("status").innerHTML=m?`<div class="notice">${esc(m)}</div>`:""}
