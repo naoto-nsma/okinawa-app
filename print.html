@@ -132,7 +132,7 @@ ul.rec li:last-child{border-bottom:0}
         <div class="box c"><div class="t">カラー</div><div class="step"><button type="button" data-d="-1" data-t="nColor" aria-label="カラーを1枚減らす">−</button><input id="nColor" type="number" inputmode="numeric" min="0" step="1" placeholder="0" aria-label="カラーの枚数"><button type="button" data-d="1" data-t="nColor" aria-label="カラーを1枚増やす">＋</button></div><div class="unit" id="uColor"></div></div>
         <div class="box m"><div class="t">モノクロ</div><div class="step"><button type="button" data-d="-1" data-t="nMono" aria-label="モノクロを1枚減らす">−</button><input id="nMono" type="number" inputmode="numeric" min="0" step="1" placeholder="0" aria-label="モノクロの枚数"><button type="button" data-d="1" data-t="nMono" aria-label="モノクロを1枚増やす">＋</button></div><div class="unit" id="uMono"></div></div>
       </div>
-      <div class="sum"><span>この印刷の費用</span><b id="cost">¥0</b></div>
+      <div class="sum"><span>この印刷の費用（税込）</span><b id="cost">¥0</b></div>
       <div class="calc" id="calc"></div>
       <div class="lab">内容（任意）</div>
       <input type="text" id="memo" placeholder="受診勧奨通知、社内資料など">
@@ -146,11 +146,11 @@ ul.rec li:last-child{border-bottom:0}
   </section>
 
   <section id="viewSum" hidden>
-    <div class="month"><button type="button" id="mPrev" aria-label="前の月">‹</button><b id="mLabel"></b><button type="button" id="mNext" aria-label="次の月">›</button></div>
+    <div class="month"><button type="button" id="mPrev" aria-label="前の月">‹</button><span style="text-align:center"><b id="mLabel"></b><small id="mRange" style="display:block;color:var(--muted);font-size:.85rem"></small></span><button type="button" id="mNext" aria-label="次の月">›</button></div>
     <div class="big" style="margin-top:12px">
       <div><div class="k">カラー</div><div class="v" id="tC" style="color:var(--color)">―</div></div>
       <div><div class="k">モノクロ</div><div class="v" id="tM">―</div></div>
-      <div><div class="k">費用</div><div class="v" id="tCost" style="color:var(--accent)">―</div></div>
+      <div><div class="k">費用（税込）</div><div class="v" id="tCost" style="color:var(--accent)">―</div></div>
     </div>
     <div class="panel" style="margin-top:14px">
       <h2>顧客別（費用の多い順）</h2>
@@ -231,6 +231,7 @@ const IN_PWA=!IN_GAS&&!!API_URL;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const yen=n=>"¥"+(Math.round(Number(n)||0)).toLocaleString("ja-JP");
+const unit=n=>"¥"+(Number(n)||0).toLocaleString("ja-JP",{maximumFractionDigits:3});
 const fmt=n=>(Math.round(Number(n)||0)).toLocaleString("ja-JP");
 const store=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}};
 let S={staff:[],customers:[],prices:{color:0,mono:0},recent:[]},who=store("print_who")||"",side=store("print_side")||"片面",showAll=false,ym="";
@@ -258,10 +259,10 @@ document.querySelectorAll(".step button").forEach(b=>b.addEventListener("click",
 ["nColor","nMono"].forEach(id=>$(id).addEventListener("input",recalc));
 function recalc(){
   const k=side==="両面"?2:1,c=intv("nColor")*k,m=intv("nMono")*k,p=S.prices;
-  $("uColor").textContent=intv("nColor")?(k===2?"両面 → ":"")+fmt(c)+"カウント":"1カウント "+yen(p.color);
-  $("uMono").textContent=intv("nMono")?(k===2?"両面 → ":"")+fmt(m)+"カウント":"1カウント "+yen(p.mono);
+  $("uColor").textContent=intv("nColor")?(k===2?"両面 → ":"")+fmt(c)+"カウント":"1カウント "+unit(p.color);
+  $("uMono").textContent=intv("nMono")?(k===2?"両面 → ":"")+fmt(m)+"カウント":"1カウント "+unit(p.mono);
   $("cost").textContent=yen(c*p.color+m*p.mono);
-  const parts=[];if(c)parts.push("カラー "+fmt(c)+"×"+yen(p.color));if(m)parts.push("モノクロ "+fmt(m)+"×"+yen(p.mono));
+  const parts=[];if(c)parts.push("カラー "+fmt(c)+"×"+unit(p.color));if(m)parts.push("モノクロ "+fmt(m)+"×"+unit(p.mono));
   $("calc").textContent=parts.join(" ＋ ");
 }
 $("saveBtn").addEventListener("click",()=>{
@@ -321,14 +322,15 @@ $("recent").addEventListener("click",e=>{
 });
 
 /* ---- 集計 ---- */
-function ymNow(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
+function ymNow(){if(S.ymNow)return S.ymNow;const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
 function ymAdd(v,n){let y=+v.slice(0,4),m=+v.slice(5,7)+n;while(m<1){m+=12;y--}while(m>12){m-=12;y++}return y+"-"+String(m).padStart(2,"0")}
 function loadSum(){
-  $("mLabel").textContent=+ym.slice(0,4)+"年"+(+ym.slice(5,7))+"月";$("mNext").disabled=ym>=ymNow();
+  $("mLabel").textContent=+ym.slice(0,4)+"年"+(+ym.slice(5,7))+"月分";$("mRange").textContent="";$("mNext").disabled=ym>=ymNow();
   $("custList").innerHTML=`<p class="empty">読み込み中…</p>`;
   rpc("getSummary",[ym]).then(renderSum).catch(e=>{if(!errCode(e))$("custList").innerHTML=`<p class="empty">読み込めませんでした。開き直してください。</p>`});
 }
 function renderSum(d){
+  $("mRange").textContent=d.range||"";
   $("tC").textContent=fmt(d.total.cc);$("tM").textContent=fmt(d.total.mc);$("tCost").textContent=yen(d.total.cost);
   const max=Math.max(1,...d.customers.map(c=>c.cost));
   $("custList").innerHTML=d.customers.length?d.customers.map(c=>{
@@ -336,7 +338,7 @@ function renderSum(d){
     return `<div class="cr"><div class="top"><span>${esc(c.customer)}</span><b>${yen(c.cost)}</b></div>
       <div class="bar"><i class="c" style="width:${(w*cw/t).toFixed(1)}%"></i><i class="m" style="width:${(w*mw/t).toFixed(1)}%"></i></div>
       <small>カラー ${fmt(c.cc)} ・ モノクロ ${fmt(c.mc)}（${c.n}件）</small></div>`}).join(""):`<p class="empty">この月の記録はまだありません</p>`;
-  $("priceNote").textContent="今の単価：カラー "+yen(d.prices.color)+"・モノクロ "+yen(d.prices.mono);
+  $("priceNote").textContent="今の単価（税込）：カラー "+unit(d.prices.color)+"・モノクロ "+unit(d.prices.mono);
   const k=d.counter||{entries:[]};
   $("ctrList").innerHTML=k.entries.length?k.entries.map(e=>{
     const lk=(e.lackC==null&&e.lackM==null)?`<span class="lack">はじめての入力</span>`:
