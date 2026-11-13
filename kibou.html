@@ -58,6 +58,10 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 .k.off{background:var(--off-soft);color:var(--off)} .k.tw{background:var(--tw-soft);color:var(--tw)} .k.add{background:var(--add-soft);color:var(--add)}
 .d.req{border:2px solid var(--off);position:relative;overflow:visible}
 .d.req::after{content:"お願い";position:absolute;top:-8px;right:-3px;font-size:8.5px;font-weight:700;background:var(--off);color:#fff;border-radius:4px;padding:0 3px;line-height:1.5}
+.k.paid{background:#fff3b0;color:#7a5c00}
+@media (prefers-color-scheme: dark){.k.paid{background:#4a3f12;color:#ffe27a}}
+.rqchip.pd{border:1.5px solid #e6c84a;background:#fff8d6;color:#7a5c00;font-weight:700;cursor:default}
+@media (prefers-color-scheme: dark){.rqchip.pd{background:#3a3210;color:#ffe27a;border-color:#8a7420}}
 .k.ask{background:transparent;color:var(--off);border:1px dashed var(--off)}
 .reqbox{background:var(--off-soft);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
 .rqh{font-size:14px;font-weight:700;color:var(--off);display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
@@ -218,12 +222,13 @@ function isCount(){return !!(I.modes&&I.modes[me]==="count")}
 function isUnd(){return !!(I.modes&&I.modes[me]==="undecided")}
 function isFlex(){return isCount()||isUnd()}
 function reqOf(d){return (I.reqs||[]).find(r=>r.d===d)||null}
-function reqLabel(r){return r.k==="off"?"休みのお願い":"出勤のお願い"}
-function unanswered(){return (I.reqs||[]).filter(r=>!(days[r.d]&&days[r.d].t==="req"))}
+function reqLabel(r){return r.k==="paid"?"有給（管理者が登録）":r.k==="off"?"休みのお願い":"出勤のお願い"}
+function unanswered(){return (I.reqs||[]).filter(r=>r.k!=="paid"&&!(days[r.d]&&days[r.d].t==="req"))}
+function applyPaid(){(I.reqs||[]).forEach(r=>{if(r.k==="paid")days[r.d]={t:"req",k:"paid",a:"ok"}})}
 /* いつもの予定から、来月の初期状態をつくる（祝日は外す） */
 function defaults(){const o={};for(let d=1;d<=nDays();d++){const b=baseOf(d),w=wd(d);
     if(isCount()){if(w>=1&&w<=5&&!I.holidays[d])o[d]={t:"on"}}else if(b&&!I.holidays[d])o[d]={t:"on",s:b.s,e:b.e}}
-  (I.reqs||[]).forEach(r=>{if(r.k==="off")o[r.d]={t:"req",k:"off",a:"ok"};else delete o[r.d]});return o}
+  (I.reqs||[]).forEach(r=>{if(r.k==="off")o[r.d]={t:"req",k:"off",a:"ok"};else if(r.k==="paid")o[r.d]={t:"req",k:"paid",a:"ok"};else delete o[r.d]});return o}
 
 function render(){
   $("loading").hidden=true;
@@ -250,9 +255,9 @@ function renderReq(){
   const grp=k=>rq.filter(r=>r.k===k);
   const block=(k,t)=>{const g=grp(k);if(!g.length)return"";
     return `<div class="rqg"><span class="rqk">${t}（${g.length}日）</span><div class="rqc">${g.map(r=>{const ok=!un.includes(r);
-      return `<button type="button" class="rqchip${ok?" ok":""}" data-rd="${r.d}">${short(r.d)}${ok?" ✓":""}</button>`}).join("")}</div></div>`};
+      return r.k==="paid"?`<button type="button" class="rqchip pd" data-rd="${r.d}">${short(r.d)}</button>`:`<button type="button" class="rqchip${ok?" ok":""}" data-rd="${r.d}">${short(r.d)}${ok?" ✓":""}</button>`}).join("")}</div></div>`};
   box.innerHTML=`<div class="rqh"><span>管理者からのお願い ${rq.length}件</span>${un.length?`<span class="un">未回答 ${un.length}件</span>`:`<span class="dn">すべて回答済み ✓</span>`}</div>`+
-    block("work","出勤のお願い")+block("off","休みのお願い")+`<div class="rqnote">日付を押すと答えられます（カレンダーの赤い枠の日と同じ）</div>`;
+    block("work","出勤のお願い")+block("off","休みのお願い")+block("paid","有給（登録済み）")+`<div class="rqnote">日付を押すと答えられます（カレンダーの赤い枠の日と同じ）</div>`;
 }
 $("reqbox").addEventListener("click",e=>{const b=e.target.closest("[data-rd]");if(b&&I.period.open)dayMenu(+b.dataset.rd)});
 function renderCal(){
@@ -263,7 +268,7 @@ function renderCal(){
   for(let d=1;d<=nDays();d++){const w=wd(d),v=days[d],b=baseOf(d);let k="";
     const rq=reqOf(d);
     if(v&&v.t==="req"){const ok=v.a==="ok";let t,c;
-      if(v.k==="work"){t=ok?(v.s?shortT(v.s,v.e):"出勤"):"出勤NG";c=ok?"on":"off"}else{t=ok?"休み":(v.s?shortT(v.s,v.e):"出勤");c=ok?"off":"time"}
+      if(v.k==="paid"){t="有給";c="paid"}else if(v.k==="work"){t=ok?(v.s?shortT(v.s,v.e):"出勤"):"出勤NG";c=ok?"on":"off"}else{t=ok?"休み":(v.s?shortT(v.s,v.e):"出勤");c=ok?"off":"time"}
       k=`<span class="k ${c}${t.length>6?" sm":""}">${esc(t)}</span>`}
     else if(rq)k=`<span class="k ask">未回答</span>`;
     else if(v){const t=v.t==="on"?(isFlex()?"可":b&&!b.teiji?shortT(v.s,v.e):"出勤"):v.t==="time"?shortT(v.s,v.e):v.t==="off"?"休み":v.t==="tw"?"在宅":"可";k=`<span class="k ${v.t}${t.length>6?" sm":""}">${esc(t)}</span>`}
@@ -342,6 +347,7 @@ function dayMenu(d){
 }
 function reqMenu(d){
   const r=reqOf(d),b=baseOf(d),v=days[d],tj=I.teiji,hol=I.holidays[d];
+  if(r.k==="paid"){openSheet(`<h3>${I.period.m}月${d}日（${W[wd(d)]}）</h3><div class="reqmsg"><b>有給</b>（管理者が登録しました）${r.msg?"<br>"+esc(r.msg):""}</div><p class="sub">この日は有給休暇です。答える必要はありません。違うときは管理者に連絡してください。</p><button class="btn" id="ok">閉じる</button>`,s=>{s.querySelector("#ok").onclick=closeSheet});return}
   const usual=b?`いつもは 出勤 ${b.s}〜${b.e}`:"いつもは お休み";
   const opts=r.k==="work"?[["ok","出勤できる"],["ng","出勤できない"]]:[["ok","休みます"],["ng","出勤したい"]];
   const cur=v&&v.t==="req"?v.a:"";
@@ -371,6 +377,7 @@ function alertIn(s,t){let m=s.querySelector(".msg");if(!m){m=document.createElem
 function summary(){
   const g={on:0,off:[],offD:[],time:[],tw:[],add:[],req:[]};
   Object.keys(days).map(Number).sort((a,b)=>a-b).forEach(d=>{const v=days[d];
+    if(v.t==="req"&&v.k==="paid"){g.req.push([lab(d)+" 有給","管理者が登録","tm"]);return}
     if(v.t==="req"){const ok=v.a==="ok",tm=v.s?" "+v.s+"〜"+v.e:"";
       g.req.push([lab(d)+" "+(v.k==="off"?"休みのお願い":"出勤のお願い"),v.k==="work"?(ok?"出勤できる"+tm:"出勤できない"):(ok?"休みます":"出勤したい"+tm),v.k==="work"?(ok?"accent":"off"):(ok?"off":"tm")]);return}
     if(v.t==="on")g.on++;else if(v.t==="off")g.offD.push(d);else g[v.t].push(lab(d)+(v.s?" "+v.s+"〜"+v.e:""))});
@@ -397,7 +404,7 @@ $("confirmBtn").onclick=()=>{
 
 function load(){
   $("loading").hidden=false;$("main").hidden=true;$("pick").hidden=true;
-  rpc("getInit",[me]).then(r=>{I=r;sent=r.mine||null;days=sent?Object.assign({},sent.days):(r.period.open?defaults():{});$("memo").value=sent?sent.memo:"";$("want").value=sent&&sent.want!==""?sent.want:"";render()})
+  rpc("getInit",[me]).then(r=>{I=r;sent=r.mine||null;days=sent?Object.assign({},sent.days):(r.period.open?defaults():{});$("memo").value=sent?sent.memo:"";$("want").value=sent&&sent.want!==""?sent.want:"";if(r.period.open)applyPaid();render()})
     .catch(e=>{if(!errCode(e)){$("loading").textContent="読み込めませんでした："+errText(e)}});
 }
 (function(){const n=new Date();$("todayLabel").textContent=n.getFullYear()+"年"+(n.getMonth()+1)+"月"+n.getDate()+"日（"+W[n.getDay()]+"）"})();
