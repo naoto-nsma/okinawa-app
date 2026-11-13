@@ -283,7 +283,7 @@ function dayMenu(d){
   const usual=isCount()?"出られる日と休みたい日を選んでください":isUnd()?"決まっている日だけ入れてください":b?`いつもは 出勤 ${b.s}〜${b.e}`:"いつもは お休み";
   const cur=v?v.t:"none";
   let opts;
-  if(isFlex()){opts=[["on","出勤できる",""],["time","時間を指定して出勤",""],["off","休み希望",""]];if(!v)opts.unshift(["none","どちらでもない（空欄）",""]);else if(isUnd())opts.push(["none","空欄に戻す",""])}
+  if(isFlex()){opts=[["on","出勤できる",""],["time","時間を指定して出勤",""]];if(isUnd())opts.push(["tw","在宅",""]);opts.push(["off","休み希望",""]);if(!v)opts.unshift(["none","どちらでもない（空欄）",""]);else if(isUnd())opts.push(["none","空欄に戻す",""])}
   else if(b){const mn=x=>{const [h,m]=String(x).split(":").map(Number);return h*60+m};
     opts=[["on","いつもどおり",b.s+"〜"+b.e],["time","時間を変える",""]];
     if(mn(b.s)<mn(I.amEnd)&&mn(b.e)>mn(I.amEnd))opts.push(["am","午前のみ",b.s+"〜"+I.amEnd]);
