@@ -207,6 +207,8 @@ function lab(d){return I.period.m+"/"+d+"（"+W[wd(d)]+"）"}
 function fmtDue(s){const p=s.split("-").map(Number);const dt=new Date(p[0],p[1]-1,p[2]);return (p[1])+"月"+p[2]+"日（"+W[dt.getDay()]+"）"}
 
 function isCount(){return !!(I.modes&&I.modes[me]==="count")}
+function isUnd(){return !!(I.modes&&I.modes[me]==="undecided")}
+function isFlex(){return isCount()||isUnd()}
 function reqOf(d){return (I.reqs||[]).find(r=>r.d===d)||null}
 function reqLabel(r){return r.k==="off"?"休みのお願い":"出勤のお願い"}
 function unanswered(){return (I.reqs||[]).filter(r=>!(days[r.d]&&days[r.d].t==="req"))}
@@ -229,8 +231,8 @@ function render(){
   $("reqbox").hidden=!(rq.length&&p.open);
   $("reqbox").innerHTML=`管理者からのお願いが${rq.length}件あります（赤い枠の日）${un.length?`　<span style="font-weight:400">未回答 ${un.length}件</span>`:""}<small>${rq.map(r=>esc(lab(r.d)+" "+reqLabel(r))).join("・")}</small>`;
   if(sent&&un.length&&p.open)$("status").innerHTML+=`<br><b style="color:var(--off)">新しいお願いがあります。答えてから送り直してください</b>`;
-  $("wantBox").hidden=!isCount();$("legOn").textContent=isCount()?"可＝出勤できる":"出勤";$("want").disabled=!p.open;
-  $("mTitle").textContent=p.y+"年"+p.m+"月";$("mHint").hidden=!p.open;$("mHint").textContent=isCount()?"曜日をタップでまとめて休みに":"日付をタップして変更";
+  $("wantBox").hidden=!isCount();$("legOn").textContent=isFlex()?"可＝出勤できる":"出勤";$("want").disabled=!p.open;
+  $("mTitle").textContent=p.y+"年"+p.m+"月";$("mHint").hidden=!p.open;$("mHint").textContent=isCount()?"曜日をタップでまとめて休みに":isUnd()?"決まっている日だけタップ":"日付をタップして変更";
   $("memo").disabled=!p.open;$("confirmBtn").hidden=!p.open;
   renderCal();
 }
@@ -244,7 +246,7 @@ function renderCal(){
       if(v.k==="work"){t=ok?(v.s?shortT(v.s,v.e):"出勤"):"出勤NG";c=ok?"on":"off"}else{t=ok?"休み":(v.s?shortT(v.s,v.e):"出勤");c=ok?"off":"time"}
       k=`<span class="k ${c}${t.length>6?" sm":""}">${esc(t)}</span>`}
     else if(rq)k=`<span class="k ask">未回答</span>`;
-    else if(v){const t=v.t==="on"?(isCount()?"可":b&&!b.teiji?shortT(v.s,v.e):"出勤"):v.t==="time"?shortT(v.s,v.e):v.t==="off"?"休み":v.t==="tw"?"在宅":"可";k=`<span class="k ${v.t}${t.length>6?" sm":""}">${esc(t)}</span>`}
+    else if(v){const t=v.t==="on"?(isFlex()?"可":b&&!b.teiji?shortT(v.s,v.e):"出勤"):v.t==="time"?shortT(v.s,v.e):v.t==="off"?"休み":v.t==="tw"?"在宅":"可";k=`<span class="k ${v.t}${t.length>6?" sm":""}">${esc(t)}</span>`}
     else if(b&&I.holidays[d])k="";
     h+=`<button type="button" class="d ${w==0?"su":w==6?"sa":""}${I.holidays[d]?" hol":""}${rq&&I.period.open?" req":""}" data-d="${d}" ${I.period.open?"":"disabled"} aria-label="${I.period.m}月${d}日">
       <span class="n">${d}</span>${k}${I.holidays[d]?`<span class="hn">${esc(I.holidays[d])}</span>`:""}</button>`}
@@ -278,10 +280,10 @@ $("cal").addEventListener("click",e=>{
 function dayMenu(d){
   if(reqOf(d))return reqMenu(d);
   const b=baseOf(d),v=days[d],hol=I.holidays[d],tj=I.teiji;
-  const usual=isCount()?"出られる日と休みたい日を選んでください":b?`いつもは 出勤 ${b.s}〜${b.e}`:"いつもは お休み";
+  const usual=isCount()?"出られる日と休みたい日を選んでください":isUnd()?"決まっている日だけ入れてください":b?`いつもは 出勤 ${b.s}〜${b.e}`:"いつもは お休み";
   const cur=v?v.t:"none";
   let opts;
-  if(isCount()){opts=[["on","出勤できる",""],["time","時間を指定して出勤",""],["off","休み希望",""]];if(!v)opts.unshift(["none","どちらでもない（空欄）",""])}
+  if(isFlex()){opts=[["on","出勤できる",""],["time","時間を指定して出勤",""],["off","休み希望",""]];if(!v)opts.unshift(["none","どちらでもない（空欄）",""]);else if(isUnd())opts.push(["none","空欄に戻す",""])}
   else if(b){const mn=x=>{const [h,m]=String(x).split(":").map(Number);return h*60+m};
     opts=[["on","いつもどおり",b.s+"〜"+b.e],["time","時間を変える",""]];
     if(mn(b.s)<mn(I.amEnd)&&mn(b.e)>mn(I.amEnd))opts.push(["am","午前のみ",b.s+"〜"+I.amEnd]);
@@ -309,12 +311,12 @@ function dayMenu(d){
       const mn=x=>{const [h,m]=x.split(":").map(Number);return h*60+m};
       if((k==="time"||k==="add"||k==="tw")&&mn(ts)>=mn(te))return alertIn(s,"終わりの時刻を、始まりより後にしてください");
       if(k==="none")delete days[d];
-      else if(k==="on")days[d]=isCount()||!b?{t:"on"}:{t:"on",s:b.s,e:b.e};
+      else if(k==="on")days[d]=isFlex()||!b?{t:"on"}:{t:"on",s:b.s,e:b.e};
       else if(k==="am")days[d]={t:"time",s:b.s,e:I.amEnd};
       else if(k==="pm")days[d]={t:"time",s:I.pmStart,e:b.e};
       else if(k==="off")days[d]={t:"off"};
       else days[d]={t:k,s:ts,e:te};
-      if(k==="time"&&b&&!isCount()&&ts===b.s&&te===b.e)days[d]={t:"on",s:b.s,e:b.e};
+      if(k==="time"&&b&&!isFlex()&&ts===b.s&&te===b.e)days[d]={t:"on",s:b.s,e:b.e};
       closeSheet();renderCal()};
   });
 }
@@ -362,7 +364,7 @@ $("confirmBtn").onclick=()=>{
   openSheet(`<div class="conf"><h3 style="font-size:1.25rem">${esc(me)} さん</h3><p class="sub" style="margin:2px 0 8px">${I.period.m}月の希望を送信します</p>
     ${sent?`<div class="warn">${esc(sent.at)}に送信済みです。送ると前の内容を上書きします（前の内容も記録に残ります）</div>`:""}
     ${g.req.length?`<div class="sec">お願いへの回答</div><ul>${g.req.map(([a,b2,c])=>row(a,b2,c)).join("")}</ul><div class="sec">希望</div>`:""}
-    <ul>${isCount()?row("出勤日数の希望",$("want").value?"月"+$("want").value+"日くらい":"未入力"):""}${row(isCount()?"出勤できる日":"出勤",g.on+"日")}${row("休み希望",g.off.join("<br>"),"off")}${row("時間を変更",g.time.join("<br>"),"tm")}${row("在宅",g.tw.join("<br>"),"tw")}${row("追加で出勤可",g.add.join("<br>"),"add")}${$("memo").value.trim()?row("ひとこと",esc($("memo").value.trim())):""}</ul></div>
+    <ul>${isCount()?row("出勤日数の希望",$("want").value?"月"+$("want").value+"日くらい":"未入力"):""}${row(isFlex()?"出勤できる日":"出勤",g.on+"日")}${row("休み希望",g.off.join("<br>"),"off")}${row("時間を変更",g.time.join("<br>"),"tm")}${row("在宅",g.tw.join("<br>"),"tw")}${row("追加で出勤可",g.add.join("<br>"),"add")}${$("memo").value.trim()?row("ひとこと",esc($("memo").value.trim())):""}</ul></div>
     <div class="msg" id="cmsg" hidden></div>
     <button class="btn" id="send">この内容で送信</button><button class="btn ghost" id="back">戻って直す</button>`,s=>{
     s.querySelector("#back").onclick=closeSheet;
