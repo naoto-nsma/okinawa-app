@@ -59,8 +59,16 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 .d.req{border:2px solid var(--off);position:relative;overflow:visible}
 .d.req::after{content:"お願い";position:absolute;top:-8px;right:-3px;font-size:8.5px;font-weight:700;background:var(--off);color:#fff;border-radius:4px;padding:0 3px;line-height:1.5}
 .k.ask{background:transparent;color:var(--off);border:1px dashed var(--off)}
-.reqbox{background:var(--off-soft);border-radius:10px;padding:10px 12px;font-size:13.5px;color:var(--off);font-weight:700;line-height:1.6}
-.reqbox small{display:block;color:var(--fg);font-weight:400}
+.reqbox{background:var(--off-soft);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.rqh{font-size:14px;font-weight:700;color:var(--off);display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.rqh .un{font-size:12.5px;font-weight:700;color:#fff;background:var(--off);border-radius:999px;padding:1px 9px}
+.rqh .dn{font-size:12.5px;font-weight:700;color:var(--accent)}
+.rqg{display:flex;flex-direction:column;gap:5px}
+.rqk{font-size:12.5px;font-weight:700;color:var(--fg)}
+.rqc{display:flex;flex-wrap:wrap;gap:6px}
+.rqchip{font:inherit;font-size:13.5px;font-weight:700;padding:5px 10px;border-radius:8px;border:1.5px dashed var(--off);background:var(--surface);color:var(--off);cursor:pointer;font-variant-numeric:tabular-nums}
+.rqchip.ok{border:1.5px solid var(--line);color:var(--muted);font-weight:400}
+.rqnote{font-size:12px;color:var(--muted)}
 .reqmsg{background:var(--off-soft);border-radius:10px;padding:10px 12px;font-size:13.5px}.reqmsg b{color:var(--off)}
 .sec{font-size:12px;font-weight:700;color:var(--muted);margin:10px 0 0}
 .want{flex-direction:row;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
@@ -227,16 +235,28 @@ function render(){
   $("band").textContent=p.open?`${p.m}月分の〆切：${fmtDue(p.due)}まで${p.daysLeft?" あと"+p.daysLeft+"日":"（今日まで）"}`:
     `${p.m}月分の受付は締め切りました。次は ${fmtDue(p.nextOpen)} から受け付けます`;
   $("status").innerHTML=sent?`<b>送信済み</b>（${esc(sent.at)}）。${p.open?"〆切までは何度でも直して送り直せます":"送った内容を表示しています"}`:(p.open?"まだ送っていません":"この月の送信はありません");
-  const rq=I.reqs||[],un=unanswered();
-  $("reqbox").hidden=!(rq.length&&p.open);
-  $("reqbox").innerHTML=`管理者からのお願いが${rq.length}件あります（赤い枠の日）${un.length?`　<span style="font-weight:400">未回答 ${un.length}件</span>`:""}<small>${rq.map(r=>esc(lab(r.d)+" "+reqLabel(r))).join("・")}</small>`;
+  const un=unanswered();
+  renderReq();
   if(sent&&un.length&&p.open)$("status").innerHTML+=`<br><b style="color:var(--off)">新しいお願いがあります。答えてから送り直してください</b>`;
   $("wantBox").hidden=!isCount();$("legOn").textContent=isFlex()?"可＝出勤できる":"出勤";$("want").disabled=!p.open;
   $("mTitle").textContent=p.y+"年"+p.m+"月";$("mHint").hidden=!p.open;$("mHint").textContent=isCount()?"曜日をタップでまとめて休みに":isUnd()?"決まっている日だけタップ":"日付をタップして変更";
   $("memo").disabled=!p.open;$("confirmBtn").hidden=!p.open;
   renderCal();
 }
+function renderReq(){
+  const rq=I.reqs||[],un=unanswered(),p=I.period,box=$("reqbox");
+  box.hidden=!(rq.length&&p.open);if(box.hidden)return;
+  const short=d=>p.m+"/"+d+"（"+W[wd(d)]+"）";
+  const grp=k=>rq.filter(r=>r.k===k);
+  const block=(k,t)=>{const g=grp(k);if(!g.length)return"";
+    return `<div class="rqg"><span class="rqk">${t}（${g.length}日）</span><div class="rqc">${g.map(r=>{const ok=!un.includes(r);
+      return `<button type="button" class="rqchip${ok?" ok":""}" data-rd="${r.d}">${short(r.d)}${ok?" ✓":""}</button>`}).join("")}</div></div>`};
+  box.innerHTML=`<div class="rqh"><span>管理者からのお願い ${rq.length}件</span>${un.length?`<span class="un">未回答 ${un.length}件</span>`:`<span class="dn">すべて回答済み ✓</span>`}</div>`+
+    block("work","出勤のお願い")+block("off","休みのお願い")+`<div class="rqnote">日付を押すと答えられます（カレンダーの赤い枠の日と同じ）</div>`;
+}
+$("reqbox").addEventListener("click",e=>{const b=e.target.closest("[data-rd]");if(b&&I.period.open)dayMenu(+b.dataset.rd)});
 function renderCal(){
+  renderReq();
   const cm=isCount()&&I.period.open;
   let h=W.map((w,i)=>cm?`<button type="button" class="w ${i==0?"su":i==6?"sa":""}" data-w="${i}" aria-label="${w}曜日をまとめて休みにする">${w}</button>`:`<div class="w ${i==0?"su":i==6?"sa":""}">${w}</div>`).join("");
   for(let i=0;i<wd(1);i++)h+=`<div class="d blank"></div>`;
