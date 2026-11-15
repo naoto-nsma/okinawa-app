@@ -63,6 +63,10 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid 
 .rqchip.pd{border:1.5px solid #e6c84a;background:#fff8d6;color:#7a5c00;font-weight:700;cursor:default}
 @media (prefers-color-scheme: dark){.rqchip.pd{background:#3a3210;color:#ffe27a;border-color:#8a7420}}
 .k.ask{background:transparent;color:var(--off);border:1px dashed var(--off)}
+.adm{background:var(--surface);border:1.5px solid var(--accent);border-radius:10px;padding:9px 12px;display:flex;flex-direction:column;gap:6px}
+.adm .ah{font-size:12.5px;font-weight:700;color:var(--accent)}
+.adm p{margin:0;font-size:14.5px;line-height:1.6;white-space:pre-wrap}
+.adm p small{display:block;font-size:11.5px;color:var(--muted);font-weight:700}
 .reqbox{background:var(--off-soft);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
 .rqh{font-size:14px;font-weight:700;color:var(--off);display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
 .rqh .un{font-size:12.5px;font-weight:700;color:#fff;background:var(--off);border-radius:999px;padding:1px 9px}
@@ -131,6 +135,7 @@ input[type=text],select{font:inherit;font-size:16px;width:100%;padding:11px 12px
       <div class="panel me"><div><small>あなた</small><b id="meName"></b></div><button type="button" class="link" id="chg">変更</button></div>
       <div class="band" id="band"></div>
       <div class="status" id="status"></div>
+      <div class="adm" id="adm" hidden></div>
       <div class="reqbox" id="reqbox" hidden></div>
       <div class="panel want" id="wantBox" hidden>
         <div class="lbl">出勤日数の希望<small>月合計で、だいたい何日くらい出られますか</small></div>
@@ -248,7 +253,14 @@ function render(){
   $("memo").disabled=!p.open;$("confirmBtn").hidden=!p.open;
   renderCal();
 }
+function renderAdm(){
+  const n=(I&&I.notes)||{},box=$("adm"),items=[];
+  if(n.mine)items.push(`<p><small>${esc(me)} さんへ</small>${esc(n.mine)}</p>`);
+  if(n.all)items.push(`<p><small>みなさんへ</small>${esc(n.all)}</p>`);
+  box.hidden=!items.length;box.innerHTML=items.length?`<span class="ah">管理者からのひとこと</span>`+items.join(""):"";
+}
 function renderReq(){
+  renderAdm();
   const rq=I.reqs||[],un=unanswered(),p=I.period,box=$("reqbox");
   box.hidden=!(rq.length&&p.open);if(box.hidden)return;
   const short=d=>p.m+"/"+d+"（"+W[wd(d)]+"）";
