@@ -100,7 +100,17 @@ table.dt .nl{display:flex;align-items:baseline}table.dt .slot{flex:none;width:2.
 table.dt .telb{display:inline-block;margin:0;padding:0 5px;border-radius:6px;font-size:.72rem;line-height:1.6;font-weight:700;color:var(--surface);background:var(--tel);vertical-align:1px}
 table.dt .tw{display:inline-block;margin-left:5px;padding:0 5px;border-radius:6px;font-size:.78rem;line-height:1.6;font-weight:700;color:var(--tw);background:var(--tw-soft);vertical-align:1px}
 .twc{box-shadow:inset 0 0 0 1.5px var(--tw)}
+table.dt .chg{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;font-size:.8rem;line-height:1.6;font-weight:700;color:#b42318;background:#fde4e1;vertical-align:1px}
+table.dt .chg s{color:var(--muted);font-weight:400;margin-right:2px;text-decoration-thickness:1.5px}
+@media (prefers-color-scheme: dark){table.dt .chg{color:#ff9b8f;background:#4a1f1b}}
+table.dt .nl.gone s{color:var(--muted);text-decoration-thickness:1.5px}
+table.dt .gn{color:#b42318;font-size:.72rem;font-weight:700}
+table.dt tr.chgrow td{background:#fff6f5}
+@media (prefers-color-scheme: dark){table.dt tr.chgrow td{background:#2a1716}}
+table.dt tr.chgrow td.k{color:#b42318;font-weight:700}
 table.dt .memo{display:inline-block;margin-left:5px;padding:0 5px;border-radius:6px;font-size:.78rem;line-height:1.6;font-weight:700;color:var(--memo);background:var(--memo-soft);vertical-align:1px}
+table.mt s.was{color:#b42318;font-size:.72rem;text-decoration-thickness:1.5px}
+table.mt .du.cg{box-shadow:0 0 0 2px #e5484d}
 table.mt td.hm{position:relative} table.mt td.hm::after{content:"";position:absolute;top:0;right:0;border-style:solid;border-width:0 7px 7px 0;border-color:transparent var(--memo) transparent transparent}
 
 #status:empty{display:none}
@@ -178,7 +188,7 @@ const WD=["日","月","火","水","木","金","土"];
 const pad=n=>String(n).padStart(2,"0");
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const $=id=>document.getElementById(id);
-const OFF=["有休","休","公休","希望休"];
+const OFF=["有休","休","公休","希望休","休み"];
 const DUTY_COLOR={"総務":"#e6e0f7","テレ":"#dcebfb","特定":"#d9f0de","点検":"#fbe8c8","柔整":"#fbdde4","架電":"#d6eff5","浦添":"#efe4d0","発送":"#fff0b8","登録":"#e9e2d6","業者登録":"#e9e2d6","本社":"#e3e3e3","企画":"#efdcf4","有休":"#eeeeee"};
 const dutyBg=d=>DUTY_COLOR[d]||"#ececec";
 const short=d=>d.length>=4?d.slice(0,2)+"<br>"+d.slice(2):esc(d);
@@ -199,11 +209,15 @@ function parse(grid,notes,tele,nameBg,BASE,Y,M){
     people.push(name);
     const bg=String(nameBg[r]||"").toLowerCase();if(bg&&bg!=="#ffffff")colors[name]=bg;
     cols.forEach(([d,c])=>{
-      const duty=String(row[c]||"").trim(),extra=String(row[c+1]||"").trim();
+      let duty=String(row[c]||"").trim(),extra=String(row[c+1]||"").trim(),chg="",was="";
       if(!duty&&!extra)return;
+      // 急な変更：「特定→休み」（急に休み）／「休→特定」（急に出勤）
+      const ar=duty.split(/\s*(?:→|->|⇒)\s*/);
+      if(ar.length>=2){const a=ar[0],b=ar[ar.length-1],isOff=v=>!v||OFF.includes(v)||/^休み?$/.test(v);
+        if(isOff(b)){chg="off";was=a||"出勤";duty=b||"休み"}else{chg="on";was=isOff(a)?(a||"休み"):a;duty=b}}
       const memo=[notes[r+","+c],notes[r+","+(c+1)]].filter(Boolean).join(" ").replace(/\s+/g," ");
       const bt=!memo&&BASE[name]?BASE[name][new Date(Y,M-1,d).getDay()]||"":"";
-      (days[d]=days[d]||[]).push({name,duty,memo:memo||bt,tw:TW.has(r+","+c),tel:/TEL/i.test(extra)||/TEL/i.test(duty)});
+      (days[d]=days[d]||[]).push({name,duty,chg,was,memo:memo||(chg==='off'?'':bt),tw:TW.has(r+","+c),tel:/TEL/i.test(extra)||/TEL/i.test(duty)});
     });
   }
   // リーダー・サブリーダーだけ色を付ける：同じ色が3人以上いる色（メンバーの色）は付けない
@@ -246,8 +260,8 @@ function monthView(data,y,m){
     let r=`<td class="nm${nc?" hc":""}" title="${esc(n)}"${nc?` style="--nc:${nc}"`:""}>${esc(n)}</td>`;
     for(let d=1;d<=days;d++){
       const w=new Date(y,m-1,d).getDay(),e=map[n+"|"+d];
-      if(e&&e.duty)used.add(e.duty);
-      r+=`<td class="c ${kind(d)}${d===todayD?" now":""}${e&&e.memo?" hm":""}"${e&&e.memo?` title="${esc(e.memo)}"`:""}>${e&&e.duty?`<span class="du${e.tw?" twc":""}" style="background:${e.tw?"var(--tw-cell)":dutyBg(e.duty)}">${short(e.duty)}</span>`:""}${e&&e.tel?`<span class="t">TEL</span>`:""}</td>`;
+      if(e&&e.duty&&e.chg!=="off")used.add(e.duty);
+      r+=`<td class="c ${kind(d)}${d===todayD?" now":""}${e&&e.memo?" hm":""}"${e&&e.memo?` title="${esc(e.memo)}"`:""}>${e&&e.chg==="off"?`<s class="was">${short(e.was)}</s>`:e&&e.duty?`<span class="du${e.tw?" twc":""}${e.chg?" cg":""}" style="background:${e.tw?"var(--tw-cell)":dutyBg(e.duty)}">${short(e.duty)}</span>`:""}${e&&e.tel?`<span class="t">TEL</span>`:""}</td>`;
     }
     return `<tr>${r}</tr>`;
   }).join("");
@@ -262,13 +276,18 @@ function dayView(data,y,m){
   const work=list.filter(x=>x.duty&&!OFF.includes(x.duty)),off=list.filter(x=>OFF.includes(x.duty));
   const tel=list.filter(x=>x.tel);
   const groups={};work.forEach(x=>(groups[x.duty]=groups[x.duty]||[]).push(x));
-  const who=x=>`<div class="nl"><span class="slot">${x.tel?`<span class="telb">TEL</span>`:""}</span><span class="nm2">${esc(x.name)}${x.tw?`<span class="tw">在宅</span>`:""}${x.memo?`<span class="memo">${esc(x.memo)}</span>`:""}</span></div>`;
-  const order=Object.keys(groups).sort((a,b)=>groups[b].length-groups[a].length);
+  list.filter(x=>x.chg==="off"&&x.was&&!OFF.includes(x.was)).forEach(x=>(groups[x.was]=groups[x.was]||[]).push(x));
+  const who=x=>x.chg==="off"?`<div class="nl gone"><span class="slot"></span><span class="nm2"><s>${esc(x.name)}</s><span class="chg">→${esc(x.duty==="休"?"休み":x.duty)}</span></span></div>`:`<div class="nl"><span class="slot">${x.tel?`<span class="telb">TEL</span>`:""}</span><span class="nm2">${esc(x.name)}${x.chg==="on"?`<span class="chg"><s>${esc(x.was==="休"?"休み":x.was)}</s>→出勤</span>`:""}${x.tw?`<span class="tw">在宅</span>`:""}${x.memo?`<span class="memo">${esc(x.memo)}</span>`:""}</span></div>`;
+  const chgOff=list.filter(x=>x.chg==="off"),chgOn=list.filter(x=>x.chg==="on");
+  const live=k=>groups[k].filter(x=>x.chg!=="off").length;
+  Object.keys(groups).forEach(k=>groups[k].sort((a,b)=>(a.chg==="off")-(b.chg==="off")));
+  const order=Object.keys(groups).sort((a,b)=>live(b)-live(a));
   let h=nav()+`<div class="dayhead">${m}月${d}日（${data.hol[d]?"祝":WD[cur.getDay()]}）${data.hol[d]?`<span class="pill cnt">${esc(data.hol[d])}</span>`:""}${isToday(cur)?`<span class="pill now">今日</span>`:""}<span class="pill cnt">出勤 ${work.length}人${work.some(x=>x.tw)?`（在宅 ${work.filter(x=>x.tw).length}人）`:""}</span></div>`;
   if(!work.length&&!off.length)return h+`<p class="empty">この日のシフトはありません</p>`;
   let rows="";
-  rows+=order.map(k=>`<tr><td class="k"><span class="du dk" style="background:${dutyBg(k)}">${esc(k)}</span><span class="n">${groups[k].length}人</span></td><td>${groups[k].map(who).join("")}</td></tr>`).join("");
-  if(off.length)rows+=`<tr class="off"><td class="k">お休み</td><td>${off.map(x=>esc(x.name)+"（"+esc(x.duty)+"）").join("<br>")}</td></tr>`;
+  rows+=order.map(k=>`<tr><td class="k"><span class="du dk" style="background:${dutyBg(k)}">${esc(k)}</span><span class="n">${live(k)}人${groups[k].length>live(k)?`<br><span class="gn">急な休み ${groups[k].length-live(k)}</span>`:""}</span></td><td>${groups[k].map(who).join("")}</td></tr>`).join("");
+  const offN=off.filter(x=>x.chg!=="off");
+  if(offN.length)rows+=`<tr class="off"><td class="k">お休み</td><td>${offN.map(x=>esc(x.name)+"（"+esc(x.duty)+"）").join("<br>")}</td></tr>`;
   return h+`<table class="dt"><tbody>${rows}</tbody></table>`;
 }
 document.addEventListener("click",e=>{
