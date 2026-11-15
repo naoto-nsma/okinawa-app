@@ -213,11 +213,14 @@ function parse(grid,notes,tele,nameBg,BASE,Y,M){
       if(!duty&&!extra)return;
       // 急な変更：「特定→休み」（急に休み）／「休→特定」（急に出勤）
       const ar=duty.split(/\s*(?:→|->|⇒)\s*/);
+      let twc=null;
       if(ar.length>=2){const a=ar[0],b=ar[ar.length-1],isOff=v=>!v||OFF.includes(v)||/^休み?$/.test(v);
-        if(isOff(b)){chg="off";was=a||"出勤";duty=b||"休み"}else{chg="on";was=isOff(a)?(a||"休み"):a;duty=b}}
+        if(/^(在宅|テレ)$/.test(b)){chg="tw";was="出社";duty=a;twc=true}
+        else if(/^(出社|事務所)$/.test(b)){chg="office";was="在宅";duty=a;twc=false}
+        else if(isOff(b)){chg="off";was=a||"出勤";duty=b||"休み"}else{chg="on";was=isOff(a)?(a||"休み"):a;duty=b}}
       const memo=[notes[r+","+c],notes[r+","+(c+1)]].filter(Boolean).join(" ").replace(/\s+/g," ");
       const bt=!memo&&BASE[name]?BASE[name][new Date(Y,M-1,d).getDay()]||"":"";
-      (days[d]=days[d]||[]).push({name,duty,chg,was,memo:memo||(chg==='off'?'':bt),tw:TW.has(r+","+c),tel:/TEL/i.test(extra)||/TEL/i.test(duty)});
+      (days[d]=days[d]||[]).push({name,duty,chg,was,memo:memo||(chg==='off'?'':bt),tw:twc===null?TW.has(r+","+c):twc,tel:/TEL/i.test(extra)||/TEL/i.test(duty)});
     });
   }
   // リーダー・サブリーダーだけ色を付ける：同じ色が3人以上いる色（メンバーの色）は付けない
@@ -277,7 +280,7 @@ function dayView(data,y,m){
   const tel=list.filter(x=>x.tel);
   const groups={};work.forEach(x=>(groups[x.duty]=groups[x.duty]||[]).push(x));
   list.filter(x=>x.chg==="off"&&x.was&&!OFF.includes(x.was)).forEach(x=>(groups[x.was]=groups[x.was]||[]).push(x));
-  const who=x=>x.chg==="off"?`<div class="nl gone"><span class="slot"></span><span class="nm2"><s>${esc(x.name)}</s><span class="chg">→${esc(x.duty==="休"?"休み":x.duty)}</span></span></div>`:`<div class="nl"><span class="slot">${x.tel?`<span class="telb">TEL</span>`:""}</span><span class="nm2">${esc(x.name)}${x.chg==="on"?`<span class="chg"><s>${esc(x.was==="休"?"休み":x.was)}</s>→出勤</span>`:""}${x.tw?`<span class="tw">在宅</span>`:""}${x.memo?`<span class="memo">${esc(x.memo)}</span>`:""}</span></div>`;
+  const who=x=>x.chg==="off"?`<div class="nl gone"><span class="slot"></span><span class="nm2"><s>${esc(x.name)}</s><span class="chg">→${esc(x.duty==="休"?"休み":x.duty)}</span></span></div>`:`<div class="nl"><span class="slot">${x.tel?`<span class="telb">TEL</span>`:""}</span><span class="nm2">${esc(x.name)}${x.chg==="on"?`<span class="chg"><s>${esc(x.was==="休"?"休み":x.was)}</s>→出勤</span>`:""}${x.chg==="tw"?`<span class="chg"><s>出社</s>→在宅</span>`:x.chg==="office"?`<span class="chg"><s>在宅</s>→出社</span>`:x.tw?`<span class="tw">在宅</span>`:""}${x.memo?`<span class="memo">${esc(x.memo)}</span>`:""}</span></div>`;
   const chgOff=list.filter(x=>x.chg==="off"),chgOn=list.filter(x=>x.chg==="on");
   const live=k=>groups[k].filter(x=>x.chg!=="off").length;
   Object.keys(groups).forEach(k=>groups[k].sort((a,b)=>(a.chg==="off")-(b.chg==="off")));
