@@ -224,7 +224,7 @@ function lab(d){return I.period.m+"/"+d+"（"+W[wd(d)]+"）"}
 function fmtDue(s){const p=s.split("-").map(Number);const dt=new Date(p[0],p[1]-1,p[2]);return (p[1])+"月"+p[2]+"日（"+W[dt.getDay()]+"）"}
 
 function isCount(){return !!(I.modes&&I.modes[me]==="count")}
-function isUnd(){return !!(I.modes&&I.modes[me]==="undecided")}
+function isUnd(){return !!(I.modes&&(I.modes[me]==="undecided"||I.modes[me]==="optional"))}
 function isFlex(){return isCount()||isUnd()}
 function reqOf(d){return (I.reqs||[]).find(r=>r.d===d)||null}
 function reqLabel(r){return r.k==="paid"?"有給（管理者が登録）":r.k==="off"?"休みのお願い":"出勤のお願い"}
