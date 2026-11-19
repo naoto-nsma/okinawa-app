@@ -79,14 +79,82 @@ input:focus-visible,select:focus-visible,button:focus-visible,.drop:focus-visibl
 .row{display:flex;gap:10px;flex-wrap:wrap}
 .dt{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:6px}
 .result .val.small{font-size:16px}
+/* 最初の画面（発送／受け取り） */
+.big2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.bigb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:170px;border-radius:16px;border:0;font:inherit;font-weight:700;font-size:1.35rem;cursor:pointer;color:#fff;text-decoration:none;padding:12px}
+.bigb small{font-size:.8rem;font-weight:400;opacity:.92}
+.bigb svg{width:64px;height:64px;margin-bottom:4px}
+.b-send{background:#2f6fa8}.b-recv{background:#c2456a}
+.bigb:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.tag{display:inline-block;font-size:11px;padding:1px 8px;border-radius:999px;font-weight:700;margin-right:6px;vertical-align:1px}
+.tag.s{background:#e6f0fa;color:#1d4f7c}.tag.r{background:#fbe2ea;color:#a2345a}
+.hd .back.home{border:0;font-family:inherit;cursor:pointer}
+/* 発送の画面は青 */
+body.send{--bg:#f1f6fb;--line:#d3e1ee;--accent:#2f6fa8;--accent-soft:#e6f0fa}
+@media (prefers-color-scheme: dark){body.send{--bg:#131a22;--surface:#1b2530;--line:#2d3d4f;--accent:#7fb2e5;--accent-ink:#0f1a26;--accent-soft:#1f3346}}
+.sum3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.sum3 div{background:var(--bg);padding:8px 10px;min-width:0}.sum3 .lab{font-size:12px;color:var(--muted)}.sum3 .val{font-size:18px;font-weight:700}
+.mtabs{display:flex;gap:6px}.mtabs button{flex:1;font:inherit;font-size:13px;font-weight:700;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer}.mtabs button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 [hidden]{display:none!important}
 @media (max-width:520px){.line{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.line .lc{grid-column:1/-1}.line .rm{grid-column:1/-1;height:auto}.edit{grid-template-columns:1fr 1fr}.edit .ed-date{grid-column:1/-1}.result .val{font-size:17px}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="hd"><h1><a id="backMenu" class="back" href="index.html" hidden>‹ メニュー</a>郵便管理</h1><span class="today" id="todayLabel"></span></div>
+  <div class="hd"><h1><a id="backMenu" class="back" href="index.html" hidden>‹ メニュー</a><button type="button" id="backHome" class="back home" hidden>‹ 戻る</button><span id="ttl">郵便管理</span></h1><span class="today" id="todayLabel"></span></div>
 
+  <!-- 最初の画面 -->
+  <div id="vHome" class="wrap" style="gap:16px">
+    <div class="big2">
+      <a class="bigb b-send" href="#send" target="_self"><svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M58 8L6 28l20 8 6 20 26-48z"/><path d="M26 36L58 8"/></svg>発送<small>後納郵便を記録</small></a>
+      <a class="bigb b-recv" href="#recv" target="_self"><svg viewBox="0 0 64 64" fill="none" stroke="#fff" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M10 30a12 12 0 0 1 24 0v22H10z"/><path d="M34 30h20v22H34"/><path d="M44 30V12h10v7H44"/><path d="M16 38h12"/><path d="M28 60V52"/></svg>受け取り<small>受取人払の返信など</small></a>
+    </div>
+    <div class="panel">
+      <div style="font-weight:700">今日の動き</div>
+      <ul class="recent" id="todayList"><li class="empty">読み込み中…</li></ul>
+    </div>
+  </div>
+
+  <!-- 発送（後納郵便） -->
+  <div id="vSend" class="wrap" style="gap:16px" hidden>
+    <form class="panel" id="sForm" novalidate>
+      <label>登録者<select id="sWho"><option value="">読み込み中…</option></select></label>
+      <input type="file" id="sPhoto" accept="image/*" capture="environment" hidden>
+      <input type="file" id="sPhotoLib" accept="image/*" hidden>
+      <div class="drop" id="sDrop" tabindex="0" role="button" aria-label="カメラで取扱票を撮影">
+        <div><strong>後納郵便物等取扱票を撮影</strong>タップするとカメラが起動します</div>
+      </div>
+      <button type="button" class="btn ghost small" id="sLibBtn" style="align-self:flex-start">保存済みの写真から選ぶ</button>
+      <div class="result" aria-live="polite">
+        <div><div class="lab">取扱日</div><div class="val num none" id="svDate">写真から</div></div>
+        <div><div class="lab">通数</div><div class="val num none" id="svCount">写真から</div></div>
+        <div><div class="lab">料金</div><div class="val num none" id="svAmount">写真から</div></div>
+      </div>
+      <div class="status"><span id="sStatus">取扱票を撮ると、取扱日・通数・料金を自動で読み取ります</span><button type="button" class="btn link" id="sEditBtn">手で直す</button></div>
+      <div class="split-sum" id="sDetail" hidden></div>
+      <details id="sRawBox" hidden style="font-size:12px;color:var(--muted)"><summary>写真から読み取った文字を見る</summary><pre id="sRawText" style="white-space:pre-wrap;margin:6px 0 0;font-size:12px"></pre></details>
+      <div class="edit" id="sEditBox" hidden>
+        <label class="ed-date">取扱日<input type="date" id="sDate"></label>
+        <label>通数<input type="number" id="sCount" inputmode="numeric" min="0" step="1"></label>
+        <label>料金（円）<input type="number" id="sAmount" inputmode="numeric" min="0" step="1"></label>
+        <label style="grid-column:1/-1">内訳（種別など）<input type="text" id="sDetailIn" placeholder="第一種定形　25g　110円 × 1,149通"></label>
+        <label style="grid-column:1/-1">発行番号<input type="text" id="sIssue" placeholder="取扱票の右上の番号"></label>
+      </div>
+      <label>顧客（取扱票の手書きは読み取らないので選んでください）<select id="sCust"></select></label>
+      <label>メモ（任意）<input type="text" id="sMemo" placeholder="受診勧奨通知、2回目など"></label>
+      <div id="sMsg" class="msg" hidden></div>
+      <button class="btn" id="sSaveBtn" type="submit" disabled>読み込み中…</button>
+    </form>
+    <div class="panel">
+      <div class="mtabs" id="sMonths"></div>
+      <div class="sum3"><div><div class="lab">件数</div><div class="val num" id="smN">―</div></div><div><div class="lab">通数</div><div class="val num" id="smC">―</div></div><div><div class="lab">料金</div><div class="val num" id="smA">―</div></div></div>
+      <ul class="recent" id="sRecent"><li class="empty">読み込み中…</li></ul>
+    </div>
+    <p class="foot">まちがいは一覧の「直す」から訂正できます。同じ取扱票（発行番号）を2回登録しようとすると、お知らせが出ます。</p>
+  </div>
+
+  <!-- 受け取り（受取人払） -->
+  <div id="vRecv" class="wrap" style="gap:16px" hidden>
   <form class="panel" id="form" novalidate>
     <label>登録者<select id="fWho"><option value="">読み込み中…</option></select></label>
 
@@ -137,6 +205,7 @@ input:focus-visible,select:focus-visible,button:focus-visible,.drop:focus-visibl
     <ul class="recent" id="recent"><li class="empty">読み込み中…</li></ul>
   </div>
   <p class="foot">登録内容のまちがいは「最近の登録」の「直す」から訂正できます。</p>
+  </div>
 </div>
 
 <script>
@@ -217,11 +286,30 @@ function startApp(){
       r.staff.map(function(n){ return '<option value="'+esc(n)+'">'+esc(n)+'</option>'; }).join('');
     var last = store('uketori_who'); if (last && r.staff.indexOf(last) >= 0) $('fWho').value = last;
     $('fCust').innerHTML = custOptions();
-    renderResult(); renderRecent(r.recent);
+    $('sWho').innerHTML = $('fWho').innerHTML; $('sWho').value = $('fWho').value;
+    $('sCust').innerHTML = custOptions(); sToday = r.today; $('sDate').value = r.today;
+    $('sSaveBtn').disabled = false; $('sSaveBtn').textContent = '発送を記録する';
+    renderResult(); renderSend(r.send || []); renderRecent(r.recent);
     $('saveBtn').disabled = false; $('saveBtn').textContent = '登録する';
     if (!customers.length) showMsg('顧客がまだありません。スプレッドシートの「顧客」タブに顧客名を入れてから、この画面を開き直してください');
   }).withFailureHandler(function(e){ showMsg('読み込めませんでした：' + e.message); }).getInit();
-  $('fWho').onchange = function(){ store('uketori_who', $('fWho').value); };
+  $('fWho').onchange = function(){ store('uketori_who', $('fWho').value); $('sWho').value = $('fWho').value; };
+  $('sWho').onchange = function(){ store('uketori_who', $('sWho').value); $('fWho').value = $('sWho').value; };
+
+  // ---- 画面の切り替え（最初の画面／発送／受け取り）
+  function route(){
+    var h = location.hash;
+    var v = h === '#send' ? 'send' : h === '#recv' ? 'recv' : 'home';
+    $('vHome').hidden = v !== 'home'; $('vSend').hidden = v !== 'send'; $('vRecv').hidden = v !== 'recv';
+    document.body.classList.toggle('send', v === 'send');
+    $('ttl').textContent = v === 'send' ? '発送（後納郵便）' : v === 'recv' ? '受け取り（受取人払）' : '郵便管理';
+    $('backHome').hidden = v === 'home';
+    $('backMenu').hidden = !(IN_PWA && v === 'home');
+    document.title = $('ttl').textContent;
+    window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', route); route();
+  $('backHome').onclick = function(){ location.hash = ''; };
 
   // ---- 写真
   var drop = $('drop');
@@ -395,6 +483,7 @@ function startApp(){
   var recentList = [];
   function renderRecent(list){
     recentList = list || [];
+    renderToday();
     $('recent').innerHTML = recentList.length ? recentList.slice(0,15).map(function(r, i){
       return '<li data-i="'+i+'"><span class="rmain"><span>'+esc(r.customer)+'<div class="who">'+esc(r.date)+'　'+esc(r.who)+(r.memo?'　'+esc(r.memo):'')+'</div></span><span class="num">'+(r.count!=null?r.count+'通　':'')+'<strong>'+yen(r.amount)+'</strong></span></span>'+
         (r.id?'<button type="button" class="fixb">直す</button>':'')+'</li>';
@@ -447,9 +536,179 @@ function startApp(){
       };
     };
   });
+
+  // ---- 今日の動き（発送と受け取りをまとめて）
+  function renderToday(){
+    var items = [];
+    sendList.forEach(function(r){ if ((r.at || '').slice(0,10) === sToday) items.push({ t: r.at.slice(11), k: 's', name: r.customer, sub: r.count!=null ? r.count.toLocaleString()+'通' : '', who: (r.kind ? r.kind+'　' : '') + r.who, amount: r.amount }); });
+    recentList.forEach(function(r){ if (r.day === sToday) items.push({ t: (r.date.split(' ')[1] || ''), k: 'r', name: r.customer, sub: r.count!=null ? r.count+'通' : '', who: r.who, amount: r.amount }); });
+    items.sort(function(a,b){ return a.t < b.t ? 1 : -1; });
+    $('todayList').innerHTML = items.length ? items.slice(0,10).map(function(x){
+      return '<li><span class="rmain"><span><span class="tag '+x.k+'">'+(x.k==='s'?'発送':'受け取り')+'</span>'+esc(x.name)+'　'+esc(x.sub)+'<div class="who">'+esc(x.t)+(x.t?'　':'')+esc(x.who)+'</div></span><span class="num"><strong>'+yen(x.amount)+'</strong></span></span></li>';
+    }).join('') : '<li class="empty">今日の登録はまだありません</li>';
+  }
+
+  // ---- 発送（後納郵便）
+  var sendList = [], sToday = '', sPhotoData = null, sReading = false, sForce = false, sMonth = '';
+  function smsg(t, ok){ var m=$('sMsg'); m.textContent=t; m.className='msg'+(ok?' ok':''); m.hidden=!t; }
+  var sDrop = $('sDrop');
+  sDrop.onclick = function(){ $('sPhoto').click(); };
+  sDrop.onkeydown = function(e){ if (e.key==='Enter'||e.key===' '){ e.preventDefault(); $('sPhoto').click(); } };
+  $('sLibBtn').onclick = function(){ $('sPhotoLib').click(); };
+  $('sPhoto').onchange = sPick; $('sPhotoLib').onchange = sPick;
+  function sPick(e){
+    var f = e.target.files && e.target.files[0]; if (!f) return;
+    var img = new Image(), url = URL.createObjectURL(f);
+    img.onload = function(){
+      // 取扱票は横長で文字が細かいので、少し大きめに送る
+      var max=2200, s=Math.min(1, max/Math.max(img.width,img.height));
+      var c=document.createElement('canvas'); c.width=Math.round(img.width*s); c.height=Math.round(img.height*s);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      sPhotoData = c.toDataURL('image/jpeg', 0.85);
+      URL.revokeObjectURL(url);
+      sDrop.classList.add('has'); sDrop.innerHTML = '<img alt="選択した取扱票" src="'+sPhotoData+'">';
+      sRead();
+    };
+    img.src = url;
+  }
+  function sRead(){
+    sReading = true; $('sStatus').textContent = '読み取り中…（10秒ほどかかります）'; $('sSaveBtn').disabled = true; sForce = false;
+    RUN.run.withSuccessHandler(function(r){
+      sReading = false; $('sSaveBtn').disabled = false; $('sSaveBtn').textContent = '発送を記録する';
+      if (r.date) $('sDate').value = r.date;
+      $('sCount').value = r.count != null ? r.count : '';
+      $('sAmount').value = r.amount != null ? r.amount : '';
+      $('sDetailIn').value = r.detail || r.kind || '';
+      $('sIssue').value = r.issue || '';
+      $('sIssue').dataset.kind = r.kind || '';
+      var ok = r.count != null && r.amount != null && !!r.date;
+      $('sStatus').innerHTML = ok ? '<span class="good">✓ 取扱票から読み取りました</span>　数字が合っているか確認してください' : '一部読み取れませんでした。「手で直す」から入力してください';
+      if (!ok) $('sEditBox').hidden = false;
+      $('sRawText').textContent = r.raw || '（文字を読み取れませんでした）';
+      $('sRawBox').hidden = ok;
+      sRender();
+    }).withFailureHandler(function(err){
+      sReading = false; $('sSaveBtn').disabled = false;
+      $('sStatus').textContent = '読み取れませんでした（' + (err && err.message ? err.message : '原因不明') + '）。取扱日・通数・料金を入力してください';
+      $('sEditBox').hidden = false; sRender();
+    }).readKounou(sPhotoData);
+  }
+  function sRender(){
+    var d = $('sDate').value, c = $('sCount').value, a = $('sAmount').value, has = sPhotoData || !$('sEditBox').hidden;
+    $('svDate').textContent = has && d ? d.replace(/^\d{4}-/,'').replace(/^0/,'').replace('-0','/').replace('-','/') : (sPhotoData ? '―' : '写真から');
+    $('svCount').textContent = c !== '' ? Number(c).toLocaleString() + '通' : (sPhotoData ? '―' : '写真から');
+    $('svCount').classList.toggle('small', c.length >= 4); $('svAmount').classList.toggle('small', a.length >= 6);
+    $('svAmount').textContent = a !== '' ? yen(a) : (sPhotoData ? '―' : '写真から');
+    $('svDate').classList.toggle('none', !(has && d)); $('svCount').classList.toggle('none', c === ''); $('svAmount').classList.toggle('none', a === '');
+    var det = $('sDetailIn').value.trim();
+    $('sDetail').hidden = !det; $('sDetail').textContent = '内訳：' + det;
+  }
+  $('sEditBtn').onclick = function(){ $('sEditBox').hidden = !$('sEditBox').hidden; if (!$('sEditBox').hidden) $('sCount').focus(); sRender(); };
+  ['sDate','sCount','sAmount','sDetailIn','sIssue'].forEach(function(id){ $(id).addEventListener('input', function(){ sForce = false; $('sSaveBtn').textContent = '発送を記録する'; sRender(); }); });
+
+  $('sForm').onsubmit = function(e){
+    e.preventDefault();
+    if (sReading) return;
+    var who = $('sWho').value, date = $('sDate').value, amount = $('sAmount').value;
+    if (!who) return smsg('登録者を選んでください');
+    if (!sPhotoData && amount === '' && $('sEditBox').hidden) return smsg('取扱票を撮影してください');
+    if (!date) { $('sEditBox').hidden = false; return smsg('取扱日を入力してください'); }
+    if (amount === '') { $('sEditBox').hidden = false; return smsg('料金を読み取れていません。「手で直す」から入力してください'); }
+    if (!$('sCust').value) return smsg('顧客を選んでください');
+    var p = { date: date, customer: $('sCust').value, kind: $('sIssue').dataset.kind || '', count: $('sCount').value, amount: amount,
+      issue: $('sIssue').value.trim(), detail: $('sDetailIn').value.trim(), memo: $('sMemo').value.trim(), who: who, photo: sPhotoData, force: sForce };
+    var btn = $('sSaveBtn'); btn.disabled = true; btn.textContent = '登録中…';
+    RUN.run.withSuccessHandler(function(r){
+      smsg('登録しました：' + p.customer + '　' + (p.count !== '' ? Number(p.count).toLocaleString() + '通　' : '') + yen(p.amount), true);
+      renderSend(r.send); sReset(); btn.disabled = false; window.scrollTo(0,0);
+    }).withFailureHandler(function(err){
+      btn.disabled = false;
+      var m = String(err && err.message || err);
+      var di = m.indexOf('DUP:');
+      if (di >= 0) {
+        sForce = true; btn.textContent = 'それでも登録する';
+        return smsg(m.slice(di + 4) + '。別の発送なら、もう一度押すと登録します');
+      }
+      btn.textContent = '発送を記録する'; smsg('登録できませんでした：' + m);
+    }).saveSend(p);
+  };
+  function sReset(){
+    sPhotoData = null; sForce = false; $('sPhoto').value=''; $('sPhotoLib').value='';
+    $('sDate').value = sToday; $('sCount').value=''; $('sAmount').value=''; $('sDetailIn').value=''; $('sIssue').value=''; $('sIssue').dataset.kind=''; $('sMemo').value='';
+    $('sCust').innerHTML = custOptions(); $('sEditBox').hidden = true; $('sRawBox').hidden = true;
+    sDrop.classList.remove('has'); sDrop.innerHTML = '<div><strong>次の取扱票を撮影</strong>タップするとカメラが起動します</div>';
+    $('sStatus').textContent = '取扱票を撮ると、取扱日・通数・料金を自動で読み取ります';
+    $('sSaveBtn').textContent = '発送を記録する'; sRender();
+  }
+
+  function renderSend(list){
+    sendList = list || [];
+    var months = [], cur = sToday.slice(0,7);
+    var prev = (function(){ var y=Number(cur.slice(0,4)), m=Number(cur.slice(5,7))-1; if (m<1){m=12;y--;} return y+'-'+('0'+m).slice(-2); })();
+    months = [cur, prev];
+    if (months.indexOf(sMonth) < 0) sMonth = cur;
+    $('sMonths').innerHTML = months.map(function(m){ return '<button type="button" data-m="'+m+'" class="'+(m===sMonth?'on':'')+'">'+Number(m.slice(5))+'月の後納郵便</button>'; }).join('');
+    var rows = sendList.filter(function(r){ return r.day.slice(0,7) === sMonth; });
+    $('smN').textContent = rows.length + '件';
+    $('smC').textContent = rows.reduce(function(a,r){ return a + (r.count||0); }, 0).toLocaleString();
+    $('smA').textContent = yen(rows.reduce(function(a,r){ return a + r.amount; }, 0));
+    $('sRecent').innerHTML = rows.length ? rows.map(function(r){
+      var i = sendList.indexOf(r);
+      return '<li data-i="'+i+'"><span class="rmain"><span>'+esc(r.customer)+(r.count!=null?'　'+r.count.toLocaleString()+'通':'')+'<div class="who">'+esc(r.day.slice(5).replace('-','/'))+'　'+esc(r.detail || r.kind)+'　'+esc(r.who)+'</div>'+(r.memo?'<div class="who">'+esc(r.memo)+'</div>':'')+'</span><span class="num"><strong>'+yen(r.amount)+'</strong></span></span><button type="button" class="fixb">直す</button></li>';
+    }).join('') : '<li class="empty">この月の後納郵便はまだありません</li>';
+    renderToday();
+  }
+  $('sMonths').addEventListener('click', function(e){ var b = e.target.closest('button[data-m]'); if (!b) return; sMonth = b.dataset.m; renderSend(sendList); });
+  $('sRecent').addEventListener('click', function(e){
+    var li = e.target.closest('li[data-i]'); if (!li) return;
+    if (e.target.closest('.fix')) return;
+    if (!e.target.closest('.fixb')) return;
+    var open = li.querySelector('.fix');
+    Array.prototype.forEach.call($('sRecent').querySelectorAll('.fix'), function(f){ f.remove(); });
+    if (open) return;
+    var r = sendList[Number(li.dataset.i)];
+    var opts = customers.indexOf(r.customer) >= 0 ? customers : [r.customer].concat(customers);
+    var f = document.createElement('div'); f.className = 'fix';
+    f.innerHTML = '<label class="full">取扱日<input type="date" class="x-date" value="'+esc(r.day)+'"></label>'+
+      '<label class="full">顧客<select class="x-cust">'+opts.map(function(c){ return '<option'+(c===r.customer?' selected':'')+'>'+esc(c)+'</option>'; }).join('')+'</select></label>'+
+      '<label>通数<input type="number" class="x-count" inputmode="numeric" min="0" step="1" value="'+(r.count!=null?r.count:'')+'"></label>'+
+      '<label>料金（円）<input type="number" class="x-amount" inputmode="numeric" min="0" step="1" value="'+(r.amount||0)+'"></label>'+
+      '<label class="full">メモ<input type="text" class="x-memo" value="'+esc(r.memo)+'"></label>'+
+      (r.issue?'<div class="full who">発行番号 '+esc(r.issue)+'</div>':'')+
+      '<div class="x-msg full msg" hidden></div>'+
+      '<div class="acts"><button type="button" class="btn x-save">訂正を保存</button><button type="button" class="btn ghost x-cancel">やめる</button></div>'+
+      '<div class="acts"><button type="button" class="btn danger x-del">この記録を削除</button></div>';
+    li.appendChild(f);
+    var q = function(c){ return f.querySelector(c); };
+    var fmsg = function(t){ var m=q('.x-msg'); m.textContent=t; m.hidden=!t; };
+    var who = function(){ var w=$('sWho').value; if (!w) fmsg('上の「登録者」で自分の名前を選んでから、もう一度押してください'); return w; };
+    q('.x-cancel').onclick = function(){ f.remove(); };
+    q('.x-save').onclick = function(){
+      var w = who(); if (!w) return;
+      if (q('.x-amount').value === '') return fmsg('料金を入力してください');
+      var b = this; b.disabled = true; b.textContent = '保存中…';
+      RUN.run.withSuccessHandler(function(res){
+        renderSend(res.send); smsg('訂正しました：'+q('.x-cust').value+' '+yen(q('.x-amount').value), true);
+      }).withFailureHandler(function(err){ fmsg('訂正できませんでした：'+err.message); b.disabled=false; b.textContent='訂正を保存'; })
+      .updateSend({ id:r.id, date:q('.x-date').value, customer:q('.x-cust').value, count:q('.x-count').value, amount:q('.x-amount').value, memo:q('.x-memo').value.trim(), who:w });
+    };
+    q('.x-del').onclick = function(){
+      var w = who(); if (!w) return;
+      var box = this.parentNode;
+      box.innerHTML = '<div class="ask">「'+esc(r.customer)+' '+yen(r.amount)+'」を削除します。よろしいですか？</div><button type="button" class="btn danger x-yes">削除する</button><button type="button" class="btn ghost x-no">やめる</button>';
+      box.querySelector('.x-no').onclick = function(){ f.remove(); };
+      box.querySelector('.x-yes').onclick = function(){
+        var b = this; b.disabled = true; b.textContent = '削除中…';
+        RUN.run.withSuccessHandler(function(res){
+          renderSend(res.send); smsg('削除しました：'+r.customer+' '+yen(r.amount), true);
+        }).withFailureHandler(function(err){ fmsg('削除できませんでした：'+err.message); b.disabled=false; b.textContent='削除する'; })
+        .deleteSend({ id:r.id, who:w });
+      };
+    };
+  });
 }
 (function(){var n=new Date(),W=["日","月","火","水","木","金","土"],el=document.getElementById("todayLabel");if(el)el.textContent=n.getFullYear()+"年"+(n.getMonth()+1)+"月"+n.getDate()+"日（"+W[n.getDay()]+"）";})();
-if(IN_PWA)document.getElementById("backMenu").hidden=false;
+if(IN_PWA&&!location.hash)document.getElementById("backMenu").hidden=false;
 if(KEY) startApp(); else showGate("");
 </script>
 </body>
