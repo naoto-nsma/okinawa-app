@@ -90,6 +90,27 @@ label.f{display:block;margin:12px 0 4px;font-weight:600;font-size:13px;color:var
 .step.done{background:var(--done);border-color:#9fd3b1}
 .step.done .n{color:var(--done-ink)}
 .step.key.done{box-shadow:inset 0 0 0 2px var(--key-line)}
+.step .dt{font-size:11px;color:var(--sub);font-weight:600}
+.step.part{background:#fff0dc;border-color:#f0b860}
+.step.part .n{color:#9a5a00}
+.step.next{border:2px dashed var(--accent);position:relative}
+.step.next::after{content:"次";position:absolute;top:-8px;right:-6px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;border-radius:999px;padding:1px 6px}
+/* 一覧のまとめ */
+.sec{margin:20px 2px 0;font-size:13px;font-weight:700;color:var(--sub)}
+.rec .meta{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:3px;font-size:12px;color:var(--sub)}
+.rec .meta .nx{color:var(--accent);font-weight:700}
+.rec .dd{font-size:11px;color:var(--sub);font-weight:600;display:block}
+.dayb{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:0 8px;font-weight:700}
+/* 日ごとの作業 */
+.days{display:flex;flex-direction:column;gap:10px}
+.day{border-left:4px solid var(--accent);background:#fffdf5;border-radius:0 10px 10px 0;padding:8px 12px}
+.day.today{border-color:var(--done-ink);background:#f3faf5}
+.day .dh{font-weight:800;font-size:15px}
+.day .dh small{font-weight:600;color:var(--sub);margin-left:6px;font-size:12px}
+.day ul{margin:4px 0 0;padding-left:1.1em;font-size:14px;line-height:1.7}
+.day .pt{color:#9a5a00;font-weight:700}
+.partrow{display:flex;gap:8px;align-items:center;margin-top:8px}
+.partrow input{width:110px;border:1px solid var(--line);border-radius:9px;padding:9px;text-align:right}
 
 table.docs{width:100%;border-collapse:collapse;font-size:14px}
 table.docs th,table.docs td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:middle}
@@ -271,10 +292,47 @@ function sentOf(d,k){ return d.sent[k.name]!=null? d.sent[k.name] : (+k.count||0
 function formula(n,b){ const q=Math.floor(n/b), r=n%b; return b+' × '+q+(r?' + '+r:''); }
 function progress(d){
   let all=0,done=0;
-  stepKubun(d).forEach(k=>STEPS.forEach(s=>{all++; const c=d.cells[k.name+'|'+s]; if(c&&c.names&&c.names.length)done++;}));
+  stepKubun(d).forEach(k=>STEPS.forEach(s=>{all++; if(isDone(d.cells[k.name+'|'+s]))done++;}));
   d.docs.forEach(doc=>{ if(!docCount(d,doc)) return; ['印刷','折り'].forEach(t=>{all++; if(d.docChecks[doc.name+'|'+t])done++;}); });
   WORK_ITEMS.forEach(w=>{all++; const c=d.work[w]; if(c&&c.names&&c.names.length)done++;});
   return all?Math.round(done*100/all):0;
+}
+function isDone(c){ return !!(c&&c.names&&c.names.length&&!c.part); }
+const WD=['日','月','火','水','木','金','土'];
+function wd(ymdStr){ const p=ymdStr.split('-'); return WD[new Date(+p[0],+p[1]-1,+p[2]).getDay()]; }
+function todayStr(){ return new Date(Date.now()+9*3600e3).toISOString().slice(0,10); }
+function nowStr(){ return new Date(Date.now()+9*3600e3).toISOString().slice(0,16).replace('T',' '); }
+/* 一覧用：次の工程・最後に作業した日と人・作業した日数（サーバーの summary_ と同じ） */
+function summary(d){
+  let next='',last=null; const days={};
+  const seen=c=>{ if(!c) return; (c.hist||[]).forEach(h=>{ if(h.at) days[h.at.slice(0,10)]=1; });
+    if(c.at){ days[c.at.slice(0,10)]=1; if(!last||c.at>last.at) last={at:c.at,by:(c.names&&c.names.join('・'))||c.by||''}; } };
+  const nx=[]; stepKubun(d).forEach(k=>{ STEPS.forEach(s=>seen(d.cells[k.name+'|'+s])); const i=STEPS.findIndex(s=>!isDone(d.cells[k.name+'|'+s])); if(i>=0) nx.push({k:k.name,s:STEPS[i]}); });
+  next = nx.length && nx.every(x=>x.s===nx[0].s) ? nx[0].s : nx.map(x=>x.k+' '+x.s).join('／');
+  Object.values(d.docChecks||{}).forEach(seen); Object.values(d.work||{}).forEach(seen);
+  return {next,last,days:Object.keys(days).length};
+}
+/* 次にやる工程（区分ごとに最初の未記録） */
+function nextStep(d,k){ return STEPS.find(s=>!isDone(d.cells[k.name+'|'+s])); }
+/* 日ごとの作業 */
+function dayLog(d){
+  const by={};
+  const add=(at,line)=>{ const day=at.slice(0,10); (by[day]=by[day]||[]).push({at,line}); };
+  stepKubun(d).forEach(k=>{
+    const per={};
+    STEPS.forEach(s=>{ const c=d.cells[k.name+'|'+s]; if(!c) return;
+      (c.hist||[]).concat(c.at?[c]:[]).forEach(e=>{ if(!e.at) return; const day=e.at.slice(0,10); (per[day]=per[day]||[]).push({s,c:e}); }); });
+    Object.keys(per).forEach(day=>{
+      const items=per[day]; const names=[]; items.forEach(x=>x.c.names.forEach(n=>{ if(!names.includes(n)) names.push(n); }));
+      const steps=items.map(x=>x.c.part?`<span class="pt">${esc(x.s)}（途中 ${x.c.part}/${k.count}枚）</span>`:esc(x.s)).join('・');
+      add(items.map(x=>x.c.at).sort()[0], `<b>${esc(k.name)}</b>：${steps}　<span class="muted">${esc(names.join('・'))}</span>`);
+    });
+  });
+  const dk={}; Object.keys(d.docChecks||{}).forEach(key=>{ const c=d.docChecks[key]; if(!c.at) return; const day=c.at.slice(0,10), t=key.split('|')[1];
+    dk[day]=dk[day]||{}; dk[day][t]=dk[day][t]||{n:0,who:[],at:c.at}; dk[day][t].n++; if(c.by&&!dk[day][t].who.includes(c.by)) dk[day][t].who.push(c.by); });
+  Object.keys(dk).forEach(day=>Object.keys(dk[day]).forEach(t=>{ const x=dk[day][t]; add(x.at, `文書の${esc(t)}　${x.n}種類　<span class="muted">${esc(x.who.join('・'))}</span>`); }));
+  Object.keys(d.work||{}).filter(w=>!['印刷','折り','件数確認'].includes(w)).forEach(w=>{ const c=d.work[w]; if(c&&c.at) add(c.at, `作業：${esc(w)}　<span class="muted">${esc(c.names.join('・'))}</span>`); });
+  return Object.keys(by).sort().map(day=>({day, lines:by[day].sort((a,b)=>a.at<b.at?-1:1).map(x=>x.line)}));
 }
 function needMe(){ if(me()) return true; toast('上の「担当者」で自分の名前を選んでください'); document.getElementById('meSel').focus(); return false; }
 
@@ -305,13 +363,24 @@ function renderList(){
       <button class="btn ghost sm" onclick="reloadList()">更新</button>
       <button class="btn primary" onclick="renderNew()">＋ 新しい発送分</button>
     </div>
-    ${recs.length? recs.map(r=>`
-      <div class="rec" onclick="openRecord('${r.id}')">
-        <div class="d">${md(r.date)}</div>
-        <div class="c"><b>${esc(r.customer)}</b><span class="muted">${r.date.slice(0,4)}年 発送分 ・ ${r.total}枚</span></div>
-        <div><div class="bar"><i style="width:${r.progress}%"></i></div><div class="pct">${r.progress===100?'完了':r.progress+'%'}</div></div>
-      </div>`).join('') : '<div class="empty">まだ記録がありません。「＋ 新しい発送分」から作成してください。</div>'}
+    ${recs.length? listSections(recs) : '<div class="empty">まだ記録がありません。「＋ 新しい発送分」から作成してください。</div>'}
   `;
+}
+
+function recRow(r){
+  const t=todayStr();
+  const lastTxt=r.last? (r.last.at.slice(0,10)===t?'今日':md(r.last.at.slice(0,10))+'（'+wd(r.last.at.slice(0,10))+'）')+' '+esc(r.last.by) : '';
+  return `<div class="rec" onclick="openRecord('${r.id}')">
+    <div class="d"><span class="dd">発送</span>${md(r.date)}</div>
+    <div class="c"><b>${esc(r.customer)}</b><span class="muted">${r.total}枚</span>
+      <div class="meta">${r.progress<100&&r.next?`<span class="nx">次：${esc(r.next)}</span>`:''}${lastTxt?`<span>最後の作業 ${lastTxt}</span>`:''}${r.days>1&&r.progress<100?`<span class="dayb">${r.days}日目</span>`:''}${r.progress===100&&r.days>1?`<span>${r.days}日間で完了</span>`:''}</div></div>
+    <div><div class="bar"><i style="width:${r.progress}%"></i></div><div class="pct">${r.progress===100?'完了':r.progress+'%'}</div></div>
+  </div>`;
+}
+function listSections(recs){
+  const doing=recs.filter(r=>r.progress<100&&r.last), todo=recs.filter(r=>r.progress<100&&!r.last), done=recs.filter(r=>r.progress>=100);
+  const sec=(t,a,max)=>a.length?`<div class="sec">${t}（${a.length}${max&&a.length>max?'件中 新しい'+max+'件':''}）</div>`+a.slice(0,max||a.length).map(recRow).join(''):'';
+  return sec('作業中 ― 続きはここから',doing)+sec('まだ始めていない',todo)+sec('完了',done,20);
 }
 
 /* ---------- 新規作成 ---------- */
@@ -325,7 +394,7 @@ function renderNew(){
       <h2>新しい発送分</h2>
       <label class="f">顧客</label>
       <select class="inp" id="nCust" onchange="renderCounts()">${cs.map(c=>`<option ${c===c0?'selected':''}>${esc(c.name)}</option>`).join('')}</select>
-      <label class="f">発送日</label>
+      <label class="f">発送日（予定）<span style="font-weight:400"> ― 作業が何日かに分かれても、同じ発送分のまま続きを記録できます</span></label>
       <input class="inp" type="date" id="nDate" value="${new Date(Date.now()+9*3600e3).toISOString().slice(0,10)}">
       <label class="f">枚数</label>
       <div class="counts" id="nCounts"></div>
@@ -361,7 +430,7 @@ async function doCreate(b){
   b.disabled=true; b.textContent='作成中…';
   try{
     const d=await call('createRecord',{customer:document.getElementById('nCust').value,date,counts,docCounts});
-    S.init.records.unshift({id:d.id,customer:d.customer,date:d.date,total:total(d),progress:0});
+    S.init.records.unshift({id:d.id,customer:d.customer,date:d.date,total:total(d),progress:0,next:stepKubun(d).length?'印刷':'',last:null,days:0});
     S.rec=d; renderDetail();
   }catch(e){ fail(e); b.disabled=false; b.textContent='作成する'; }
 }
@@ -397,18 +466,23 @@ function renderDetail(){
 
     <div class="card">
       <h2>工程チェック <span class="muted">押して担当者を記録（黄色＝確認の工程）</span></h2>
-      ${stepKubun(d).map(k=>`
+      ${stepKubun(d).map(k=>{const nx=nextStep(d,k); return `
         <div class="kb">
-          <div class="kh"><b>${esc(k.name)}</b><span class="muted">${k.count}枚</span></div>
+          <div class="kh"><b>${esc(k.name)}</b><span class="muted">${k.count}枚${nx?'　次は「'+nx+'」':'　すべて記録済み'}</span></div>
           <div class="groups">
             ${GROUPS.map(([gt,gc,ss])=>`
               <div class="grp ${gc}"><div class="gt">${gt}</div><div class="steps" style="--n:${ss.length}">
-                ${ss.map(s=>{const c=d.cells[k.name+'|'+s]; const n=nameCell(c);
-                  return `<button class="step ${KEY_STEPS.includes(s)?'key':''} ${n?'done':''}" onclick="pick('cell','${esc(k.name)}|${s}','${esc(k.name)}・${s}')">
-                    <span class="l">${s}</span><span class="n ${n?'':'none'}">${n||'—'}</span></button>`}).join('')}
+                ${ss.map(s=>{const c=d.cells[k.name+'|'+s]; const n=nameCell(c); const pt=c&&c.part;
+                  return `<button class="step ${KEY_STEPS.includes(s)?'key':''} ${n&&!pt?'done':''} ${pt?'part':''} ${s===nx?'next':''}" onclick="pick('cell','${esc(k.name)}|${s}','${esc(k.name)}・${s}',${k.count})">
+                    <span class="l">${s}</span><span class="n ${n?'':'none'}">${n||'—'}</span>${pt?`<span class="dt">途中 ${pt}/${k.count}</span>`:''}${c&&c.at?`<span class="dt">${atMd(c.at)}</span>`:''}</button>`}).join('')}
               </div></div>`).join('')}
           </div>
-        </div>`).join('')}
+        </div>`}).join('')}
+    </div>
+
+    <div class="card">
+      <h2>日ごとの作業 <span class="muted">何日かに分けて作業したときの流れ</span></h2>
+      ${(()=>{const L=dayLog(d), t=todayStr(); return L.length? '<div class="days">'+L.map(x=>`<div class="day ${x.day===t?'today':''}"><div class="dh">${md(x.day)}（${wd(x.day)}）${x.day===t?'<small>今日</small>':''}</div><ul>${x.lines.map(l=>'<li>'+l+'</li>').join('')}</ul></div>`).join('')+'</div>' : '<div class="muted">まだ作業の記録がありません</div>';})()}
     </div>
 
     <div class="card">
@@ -473,35 +547,53 @@ function workNotes(w,d){
 }
 
 /* ---------- 担当者を選ぶ ---------- */
-function pick(kind,key,title){
+function pick(kind,key,title,count){
   if(!needMe()) return;
   const box=kind==='cell'?S.rec.cells:S.rec.work;
   const cur=(box[key]&&box[key].names)||[];
-  S.modal={kind,key,sel:cur.slice()};
+  S.modal={kind,key,sel:cur.slice(),count:count||0};
   const staff=[me()].concat(S.init.staff.filter(n=>n!==me()));
   cur.forEach(n=>{ if(!staff.includes(n)) staff.push(n); });
   document.getElementById('sheet').innerHTML=`
     <h3>${esc(title)}</h3>
-    <div class="muted">${cur.length?'記録済み：'+esc(cur.join('・'))+(box[key].at?'（'+esc(box[key].at)+'）':''):'まだ記録されていません'}</div>
-    <button class="btn primary big" style="margin-top:14px" onclick="saveNames([me()])">${esc(me())} で記録する</button>
+    <div class="muted">${cur.length?'記録済み：'+esc(cur.join('・'))+(box[key].part?'（途中 '+box[key].part+(count?'/'+count:'')+'枚）':'')+(box[key].at?'（'+esc(box[key].at)+'）':''):'まだ記録されていません'}</div>
+    <button class="btn primary big" style="margin-top:14px" onclick="saveDone()">${esc(me())} で記録する（終わった）</button>
+    ${kind==='cell'?`<div class="muted" style="margin-top:14px">今日は途中まで（続きは別の日）のとき</div>
+    <div class="partrow"><input type="number" inputmode="numeric" min="1" id="partN" placeholder="枚数" value="${box[key]&&box[key].part||''}"><span class="muted">/ ${count||''}枚</span><span class="spacer"></span>
+      <button class="btn" onclick="savePart()">途中まで記録</button></div>`:''}
     <div class="muted" style="margin-top:14px">ほかの人・複数人のとき</div>
     <div class="staff">${staff.map(n=>`<button class="${cur.includes(n)?'on':''}" onclick="togStaff(this,'${esc(n)}')">${esc(n)}</button>`).join('')}</div>
     <div class="row">
       ${cur.length?'<button class="btn danger" onclick="saveNames([])">記録を消す</button>':''}
       <span class="spacer"></span>
       <button class="btn" onclick="closeModal()">やめる</button>
-      <button class="btn primary" onclick="saveNames(S.modal.sel)">この内容で保存</button>
+      <button class="btn primary" onclick="saveNames(S.modal.sel,curPart())">この内容で保存</button>
     </div>`;
   document.getElementById('mask').classList.add('show');
 }
+function savePart(){
+  const n=+document.getElementById('partN').value;
+  if(!(n>0)){ toast('今日やった所までの枚数を入れてください'); return; }
+  const names=S.modal.sel.length?S.modal.sel.slice():[me()];
+  if(S.modal.count&&n>=S.modal.count){ saveNames(names); return; } // 全部終わったら完了として記録
+  saveNames(names,n);
+}
+function curPart(){ const b=S.modal.kind==='cell'?S.rec.cells:S.rec.work, c=b[S.modal.key]; return c&&c.part||0; }
+/* 「終わった」：途中までやった人の名前も残す */
+function saveDone(){
+  const box=S.modal.kind==='cell'?S.rec.cells:S.rec.work, c=box[S.modal.key];
+  const names=(c&&c.part?c.names.slice():[]); if(!names.includes(me())) names.push(me());
+  saveNames(names);
+}
 function togStaff(b,n){ const s=S.modal.sel; const i=s.indexOf(n); if(i>=0)s.splice(i,1); else s.push(n); b.classList.toggle('on'); }
 function closeModal(){ document.getElementById('mask').classList.remove('show'); S.modal=null; }
-function saveNames(names){
+function saveNames(names,part){
   const {kind,key}=S.modal; closeModal();
   const box=kind==='cell'?S.rec.cells:S.rec.work;
-  if(names.length) box[key]={names:names.slice(),at:new Date(Date.now()+9*3600e3).toISOString().slice(0,16).replace('T',' '),by:me()}; else delete box[key];
+  if(names.length){ const old=box[key]; box[key]={names:names.slice(),at:nowStr(),by:me()}; if(part) box[key].part=part;
+    if(old&&(old.part||old.hist)) box[key].hist=(old.hist||[]).concat(old.part?[{at:old.at,names:old.names,part:old.part}]:[]); } else delete box[key];
   renderDetail();
-  saveField(kind,key,names);
+  saveField(kind,key,part?{names,part}:names);
 }
 function toggleDoc(key){
   if(!needMe()) return;
@@ -517,7 +609,7 @@ async function saveField(kind,key,value){
   try{
     const d=await call('updateField',id,kind,key,value,me());
     if(S.rec&&S.rec.id===id){ S.rec=d; if(S.view==='detail'&&!S.modal) renderDetail(); }
-    const r=S.init.records.find(x=>x.id===id); if(r){r.progress=progress(d);r.total=total(d);r.date=d.date;}
+    const r=S.init.records.find(x=>x.id===id); if(r){r.progress=progress(d);r.total=total(d);r.date=d.date;Object.assign(r,summary(d));}
     toast('保存しました');
   }catch(e){ fail(e); }
 }
@@ -562,7 +654,7 @@ function renderPrint(){
         <th colspan="4" class="h1">下準備</th><th colspan="5" class="h2">封入・封緘</th><th colspan="2" class="h3">発送</th></tr>
       <tr>${STEPS.map(s=>`<th class="${KEY_STEPS.includes(s)?'y':hcls(s)}">${s}</th>`).join('')}</tr>
       ${d.kubun.map(k=>`<tr><td class="left">${esc(k.name)}</td><td>${k.count||''}</td>
-        ${STEPS.map(s=>`<td>${k.steps?nm(d.cells[k.name+'|'+s]):'-'}</td>`).join('')}</tr>`).join('')}
+        ${STEPS.map(s=>{const c=d.cells[k.name+'|'+s];return `<td>${k.steps?nm(c)+(c&&c.part?'<br><small>途中'+c.part+'</small>':''):'-'}</td>`}).join('')}</tr>`).join('')}
     </table>
     <div class="two">
       <table style="width:62%">
@@ -592,16 +684,23 @@ const MOCK=(()=>{
   const cust={name:'京都広域',kubun:['マッサージ','鍼灸'],countOnly:['重複分'],reply:'2',send:'京都専用',material:'お尋ね文書、回答書、パンフレット',bundle:25,
     docs:[{name:'お尋ね文書（マッサージ）',src:'マッサージ',side:'片面',fold:'変形'},{name:'回答書（マッサージ）',src:'マッサージ',side:'両面',fold:'内3'},
       {name:'お尋ね文書（鍼灸）',src:'鍼灸',side:'片面',fold:'変形'},{name:'回答書（鍼灸）',src:'鍼灸',side:'両面',fold:'内3'},{name:'啓発文書',src:'合計',side:'両面',fold:'内3'}]};
-  const at='2026-08-31 10:00';
-  const c=n=>({names:n,at,by:n[0]});
+  const D=(n)=>new Date(Date.now()+9*3600e3-n*864e5).toISOString().slice(0,10);
+  const at=D(1)+' 10:00';
+  const c=(n,a,part)=>{const o={names:n,at:a||at,by:n[0]}; if(part)o.part=part; return o;};
   const r={id:'demo0831',customer:'京都広域',date:'2026-08-31',kubun:[{name:'マッサージ',count:185,steps:true},{name:'鍼灸',count:148,steps:true},{name:'重複分',count:0,steps:false}],
     docs:cust.docs,reply:'2',send:'京都専用',material:cust.material,bundle:25,
-    cells:{'マッサージ|印刷':c(['大城']),'マッサージ|折り':c(['知花']),'マッサージ|準備':c(['知花']),'マッサージ|確認':c(['大城']),'マッサージ|封入':c(['高良','高野']),'マッサージ|重さ':c(['知花']),'マッサージ|4点確認':c(['大城','高野']),
-      '鍼灸|印刷':c(['大城']),'鍼灸|折り':c(['知花']),'鍼灸|準備':c(['知花']),'鍼灸|確認':c(['大城']),'鍼灸|封入':c(['知花'])},
-    docChecks:{},work:{'印刷':c(['大城']),'折り':c(['知花']),'封筒の準備':c(['知花'])},sent:{'マッサージ':179},memo:''};
-  cust.docs.forEach(x=>{r.docChecks[x.name+'|印刷']={on:true,by:'大城',at};r.docChecks[x.name+'|折り']={on:true,by:'知花',at};});
-  const recs={demo0831:r};
-  const list=()=>Object.values(recs).map(x=>({id:x.id,customer:x.customer,date:x.date,total:total(x),progress:progress(x)}));
+    cells:{'マッサージ|印刷':c(['大城'],D(1)+' 09:40'),'マッサージ|折り':c(['知花','高良'],D(1)+' 15:20'),'マッサージ|準備':c(['知花'],D(0)+' 09:30'),'マッサージ|確認':c(['大城'],D(0)+' 09:50'),'マッサージ|封入':c(['高良','高野'],D(0)+' 11:30',120),
+      '鍼灸|印刷':c(['大城'],D(1)+' 10:10'),'鍼灸|折り':c(['知花'],D(1)+' 16:00')},
+    docChecks:{},work:{'印刷':c(['大城'],D(1)+' 10:10'),'折り':c(['知花'],D(1)+' 16:00'),'封筒の準備':c(['知花'],D(0)+' 09:30')},sent:{},memo:'封入はマッサージの120枚目まで。続きは明日'};
+  cust.docs.forEach(x=>{r.docChecks[x.name+'|印刷']={on:true,by:'大城',at:D(1)+' 10:00'};r.docChecks[x.name+'|折り']={on:true,by:'知花',at:D(1)+' 16:00'};});
+  r.date=D(-2); r.kubun[0].count=180; r.kubun[1].count=95;
+  const done=JSON.parse(JSON.stringify(r)); done.id='demo1105'; done.date=D(10); done.memo='';
+  Object.keys(done.docChecks).forEach(k=>done.docChecks[k].at=D(13)+' 09:00');
+  STEPS.forEach(s=>{done.cells['マッサージ|'+s]=c(['知花'],D(13)+' 10:00');done.cells['鍼灸|'+s]=c(['大城'],D(12)+' 14:00');});
+  WORK_ITEMS.forEach(w=>done.work[w]=c(['知花'],D(12)+' 15:00'));
+  const fresh=JSON.parse(JSON.stringify(r)); fresh.id='demo1125'; fresh.date=D(-6); fresh.cells={}; fresh.work={}; fresh.docChecks={}; fresh.memo='';
+  const recs={demo0831:r,demo1105:done,demo1125:fresh};
+  const list=()=>Object.values(recs).map(x=>Object.assign({id:x.id,customer:x.customer,date:x.date,total:total(x),progress:progress(x)},summary(x)));
   return {
     getInit:()=>({customers:[cust],staff:['大城','知花','高良','高野'],records:list()}),
     getRecord:id=>JSON.parse(JSON.stringify(recs[id])),
@@ -609,8 +708,8 @@ const MOCK=(()=>{
       kubun:cust.kubun.map(k=>({name:k,count:+p.counts[k]||0,steps:true})).concat(cust.countOnly.map(k=>({name:k,count:+p.counts[k]||0,steps:false}))),
       docs:cust.docs,docCounts:p.docCounts||{},reply:cust.reply,send:cust.send,material:cust.material,bundle:25,cells:{},docChecks:{},work:{},sent:{},memo:''};return JSON.parse(JSON.stringify(recs[id]));},
     updateField:(id,kind,key,value,by)=>{const d=recs[id];
-      if(kind==='cell'||kind==='work'){const b=kind==='cell'?d.cells:d.work; if(value.length)b[key]={names:value,at:'2026-10-29 16:30',by}; else delete b[key];}
-      else if(kind==='doc'){ if(value)d.docChecks[key]={on:true,by,at:'2026-10-29 16:30'}; else delete d.docChecks[key]; }
+      if(kind==='cell'||kind==='work'){const b=kind==='cell'?d.cells:d.work; const nm=Array.isArray(value)?value:value.names; const old=b[key]; if(nm.length){b[key]={names:nm,at:nowStr(),by}; if(!Array.isArray(value)&&value.part)b[key].part=value.part; if(old&&(old.part||old.hist))b[key].hist=(old.hist||[]).concat(old.part?[{at:old.at,names:old.names,part:old.part}]:[]);} else delete b[key];}
+      else if(kind==='doc'){ if(value)d.docChecks[key]={on:true,by,at:nowStr()}; else delete d.docChecks[key]; }
       else if(kind==='sent'){ if(value==='')delete d.sent[key]; else d.sent[key]=+value; }
       else if(kind==='doccount'){ d.docCounts=d.docCounts||{}; if(value==='')delete d.docCounts[key]; else d.docCounts[key]=+value; }
       else if(kind==='memo') d.memo=value; else if(kind==='date') d.date=value;
