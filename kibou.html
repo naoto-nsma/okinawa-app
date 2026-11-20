@@ -242,7 +242,7 @@ function render(){
   $("pick").hidden=true;$("main").hidden=false;$("meName").textContent=me;
   const p=I.period;
   $("band").className="band "+(p.open?"open":"closed");
-  $("band").textContent=p.open?`${p.m}月分の〆切：${fmtDue(p.due)}まで${p.daysLeft?" あと"+p.daysLeft+"日":"（今日まで）"}`:
+  $("band").textContent=p.open?`${p.m}月分の〆切：${fmtDue(p.due)}${p.dueTime&&p.dueTime!=="23:59"?" "+p.dueTime:""}まで${p.daysLeft?" あと"+p.daysLeft+"日":"（今日まで）"}`:
     `${p.m}月分の受付は締め切りました。次は ${fmtDue(p.nextOpen)} から受け付けます`;
   $("status").innerHTML=sent?`<b>送信済み</b>（${esc(sent.at)}）。${p.open?"〆切までは何度でも直して送り直せます":"送った内容を表示しています"}`:(p.open?"まだ送っていません":"この月の送信はありません");
   const un=unanswered();
